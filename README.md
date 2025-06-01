@@ -51,7 +51,7 @@ The application works with three main data sources:
 1. **Clone the repository**
    \`\`\`bash
    git clone <repository-url>
-   cd document-review
+   cd document-review-screen
    \`\`\`
 
 2. **Install dependencies**
@@ -111,7 +111,7 @@ To run Google Lighthouse and generate performance insights:
 
 ### Lighthouse Results Screenshot
 
-![Lighthouse Performance Results](./public/assets/a2cbec1124234a6d846f908ba9531a2e-1.jpg)
+![Lighthouse Performance Results](./public/assets/lighthouse.jpg)
 
 ### Key Performance Metrics
 

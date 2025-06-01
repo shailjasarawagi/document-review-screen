@@ -8,6 +8,7 @@ interface ConfirmationModalProps {
   onClose: () => void;
   onConfirm: () => void;
   selectedCount: number;
+  message?: string;
 }
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -15,6 +16,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onClose,
   onConfirm,
   selectedCount,
+  message,
 }) => {
   if (!isOpen) return null;
 
@@ -31,10 +33,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </Button>
         </div>
 
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Are you sure you want to confirm the selected {selectedCount} field
-          {selectedCount !== 1 ? "s" : ""}?
-        </p>
+        {message ? (
+          message
+        ) : (
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Are you sure you want to confirm the selected {selectedCount} field
+            {selectedCount !== 1 ? "s" : ""}?
+          </p>
+        )}
 
         <div className="w-full flex flex-row gap-2">
           <Button

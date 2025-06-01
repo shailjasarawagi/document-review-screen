@@ -1,19 +1,20 @@
 import type React from "react";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Maximize2, Minus, Plus, ZoomIn, ZoomOut } from "lucide-react";
 import type { Field, BoundingBox, ZoomLevel } from "../../../types";
 import { Button } from "../../elements/button";
 import { Select } from "../../elements/select";
 
 interface DocumentViewerProps {
-  imageUrl: string;
-  imageWidth: number;
-  imageHeight: number;
   selectedFields: Set<number>;
   hoveredField: number | null;
   onFieldHover: (fieldId: number | null) => void;
   fields: Field[];
   bboxes: BoundingBox[];
+  documentInfo: any;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  pageRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
 }
 
 const zoomLevels: ZoomLevel[] = [
@@ -26,21 +27,135 @@ const zoomLevels: ZoomLevel[] = [
 ];
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
-  imageUrl,
-  imageWidth,
-  imageHeight,
   selectedFields,
   hoveredField,
   onFieldHover,
   fields,
-  // bboxes,
+  bboxes,
+  documentInfo,
+  currentPage,
+  onPageChange,
+  pageRefs,
 }) => {
   const [currentZoom, setCurrentZoom] = useState<ZoomLevel>(zoomLevels[0]);
-
+  const imageWidth = 1700,
+    imageHeight = 2200;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  // const [visiblePage, setVisiblePage] = useState(currentPage);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const getActualZoom = () => {
+    if (currentZoom.value === 0) {
+      const scaleX = containerSize.width / imageWidth;
+      const scaleY = containerSize.height / imageHeight;
+      return Math.min(scaleX, scaleY, 1);
+    }
+    return currentZoom.value;
+  };
+
+  const actualZoom = getActualZoom();
+
+  // useEffect(() => {
+  //   const container = containerRef.current;
+  //   if (!container) return;
+
+  //   const observer = new IntersectionObserver(
+  //     (entries) => {
+  //       entries.forEach((entry) => {
+  //         if (entry.isIntersecting) {
+  //           const pageIndex = Number(
+  //             entry.target.getAttribute("data-page-index")
+  //           );
+  //           if (pageIndex + 1 !== visiblePage) {
+  //             setVisiblePage(pageIndex + 1);
+  //             onPageChange(pageIndex + 1);
+  //           }
+  //         }
+  //       });
+  //     },
+  //     {
+  //       root: container,
+  //       threshold: 0.5,
+  //     }
+  //   );
+
+  //   const pages = container.querySelectorAll("[data-page-index]");
+  //   pages.forEach((page) => observer.observe(page));
+
+  //   return () => {
+  //     pages.forEach((page) => observer.unobserve(page));
+  //     observer.disconnect();
+  //   };
+  // }, [visiblePage, onPageChange, actualZoom]);
+
+  const debounce = useCallback((func: Function, wait: number) => {
+    let timeout: any;
+    return (...args: any[]) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  }, []);
+
+  const detectVisiblePage = useCallback(() => {
+    if (!containerRef.current || !pageRefs.current) return;
+
+    let maxRatio = 0;
+    let visiblePage = currentPage;
+
+    pageRefs.current.forEach((pageEl, index) => {
+      if (pageEl) {
+        const rect = pageEl.getBoundingClientRect();
+        const containerRect = containerRef.current!.getBoundingClientRect();
+        const visibleHeight =
+          Math.min(rect.bottom, containerRect.bottom) -
+          Math.max(rect.top, containerRect.top);
+        const ratio = visibleHeight / rect.height;
+
+        if (ratio > maxRatio && ratio > 0.1) {
+          // At least 10% visible
+          maxRatio = ratio;
+          visiblePage = index + 1;
+        }
+      }
+    });
+
+    if (visiblePage !== currentPage) {
+      onPageChange(visiblePage);
+    }
+  }, [currentPage, onPageChange]);
+
+  const debouncedDetectVisiblePage = useCallback(
+    debounce(detectVisiblePage, 100),
+    [detectVisiblePage]
+  );
+
+  useEffect(() => {
+    if (!containerRef.current || !pageRefs.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      () => {
+        debouncedDetectVisiblePage();
+      },
+      {
+        root: containerRef.current,
+        threshold: [0.1, 0.5, 0.9],
+      }
+    );
+
+    pageRefs.current.forEach((el) => {
+      if (el) observerRef.current!.observe(el);
+    });
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [debouncedDetectVisiblePage]);
 
   useEffect(() => {
     const updateContainerSize = () => {
@@ -65,23 +180,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   }, []);
 
-  // const handleZoomIn = useCallback(() => {
-  //   const currentIndex = zoomLevels.findIndex(
-  //     (z) => z.value === currentZoom.value
-  //   );
-  //   if (currentIndex < zoomLevels.length - 1) {
-  //     setCurrentZoom(zoomLevels[currentIndex + 1]);
-  //   }
-  // }, [currentZoom]);
-
-  // const handleZoomOut = useCallback(() => {
-  //   const currentIndex = zoomLevels.findIndex(
-  //     (z) => z.value === currentZoom.value
-  //   );
-  //   if (currentIndex > 0) {
-  //     setCurrentZoom(zoomLevels[currentIndex - 1]);
-  //   }
-  // }, [currentZoom]);
   const adjustZoom = useCallback(
     (direction: "in" | "out") => {
       const currentIndex = zoomLevels.findIndex(
@@ -95,6 +193,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     },
     [currentZoom]
   );
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLInputElement) return;
@@ -121,19 +220,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [adjustZoom, toggleFullscreen]);
 
-  const getActualZoom = () => {
-    if (currentZoom.value === 0) {
-      const scaleX = containerSize.width / imageWidth;
-      const scaleY = containerSize.height / imageHeight;
-      return Math.min(scaleX, scaleY, 1);
-    }
-    return currentZoom.value;
-  };
-
-  const actualZoom = getActualZoom();
-  const displayWidth = imageWidth * actualZoom;
-  const displayHeight = imageHeight * actualZoom;
-
   const getFieldPosition = useCallback(
     (field: Field) => {
       if (!field.content.position || field.content.position.length !== 4) {
@@ -141,13 +227,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       }
       const [x1, y1, x2, y2] = field.content.position;
       return {
-        left: (x1 / imageWidth) * displayWidth,
-        top: (y1 / imageHeight) * displayHeight,
-        width: ((x2 - x1) / imageWidth) * displayWidth,
-        height: ((y2 - y1) / imageHeight) * displayHeight,
+        left: x1 * actualZoom,
+        top: y1 * actualZoom,
+        width: (x2 - x1) * actualZoom,
+        height: (y2 - y1) * actualZoom,
       };
     },
-    [imageWidth, imageHeight, displayHeight, displayWidth]
+    [imageWidth, imageHeight, currentPage, actualZoom]
   );
 
   const debouncedHover = useCallback(
@@ -168,6 +254,59 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     },
     [selectedFields, hoveredField]
   );
+
+  const getFieldPositions = useCallback(
+    (field: [number, number, number, number]) => {
+      if (!field || field.length !== 4) {
+        return null;
+      }
+      const [x1, y1, x2, y2] = field;
+      return {
+        left: x1 * actualZoom,
+        top: y1 * actualZoom,
+        width: (x2 - x1) * actualZoom,
+        height: (y2 - y1) * actualZoom,
+      };
+    },
+    [imageWidth, imageHeight, currentPage, actualZoom]
+  );
+
+  const boxesByPage = useMemo(() => {
+    if (!bboxes || bboxes.length === 0) {
+      return {};
+    }
+
+    const map = {} as Record<number, [number, number, number, number][]>;
+    bboxes.forEach(({ page, rectangle }: BoundingBox) => {
+      if (!map[page]) map[page] = [];
+      map[page].push(rectangle);
+    });
+
+    return map;
+  }, [bboxes]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (event.ctrlKey) {
+        event.preventDefault();
+        setZoomLevel((prev) => {
+          const delta = event.deltaY < 0 ? 0.1 : -0.1;
+          const newZoom = Math.max(0.5, Math.min(prev + delta, 3)); // Limit zoom: 0.5x to 3x
+          return newZoom;
+        });
+      }
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleWheel);
+  }, []);
+
+  useEffect(() => {
+    debouncedDetectVisiblePage();
+  }, [zoomLevel, debouncedDetectVisiblePage]);
 
   return (
     <div className="flex flex-col h-full bg-gray-100 dark:bg-gray-800">
@@ -207,53 +346,88 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       </div>
 
       <div ref={containerRef} className="flex-1 overflow-auto p-4">
-        <div
-          className="relative mx-auto bg-white shadow-lg"
-          style={{
-            width: displayWidth,
-            height: displayHeight,
-            minWidth: displayWidth,
-            minHeight: displayHeight,
-          }}
-        >
-          <img
-            ref={imageRef}
-            src={`/assets/${imageUrl}`}
-            sizes="(max-width: 600px) 480px, 800px"
-            alt="description"
-            className="max-w-full max-h-full object-contain"
-            style={{
-              width: displayWidth,
-              height: displayHeight,
-            }}
-          />
+        {documentInfo.pages.map((page: any, pageIndex: number) => {
+          const pageNumber = pageIndex + 1;
 
-          {fields.map((field) => {
-            const position = getFieldPosition(field);
-            if (!position) return null;
+          const pageBBoxes = boxesByPage[pageNumber] || [];
 
-            return (
-              <div
-                key={field.id}
-                className={`absolute border-2 cursor-pointer transition-all duration-200 ${
-                  isFieldHighlighted(field.id)
-                    ? "border-blue-500 bg-blue-500 bg-opacity-20"
-                    : "border-transparent hover:border-blue-300 hover:bg-blue-300 hover:bg-opacity-10"
-                }`}
-                style={{
-                  left: position.left,
-                  top: position.top,
-                  width: position.width,
-                  height: position.height,
-                }}
-                onClick={() => handleFieldClick(field.id)}
-                onMouseEnter={() => debouncedHover(field.id)}
-                onMouseLeave={() => debouncedHover(null)}
-                title={`${field.label}: ${field.content.value}`}
+          return (
+            <div
+              key={pageIndex}
+              // data-page-index={pageIndex}
+              // id={`page-${pageIndex}`}
+              className="relative mx-auto bg-white shadow-lg mb-4"
+              style={{
+                width: page.image.width * actualZoom,
+                height: page.image.height * actualZoom,
+              }}
+              ref={(el) => {
+                pageRefs.current[pageIndex] = el;
+              }}
+            >
+              <img
+                ref={imageRef}
+                src={`/assets/${page.image.url}`}
+                alt={`Page ${pageIndex + 1}`}
+                className="absolute top-0 left-0 w-full h-full object-contain"
               />
-            );
-          })}
-        </div>
+
+              {pageBBoxes?.map(
+                (
+                  [x0, y0, x2, y2]: [number, number, number, number],
+                  idx: number
+                ) => {
+                  const position = getFieldPositions([x0, y0, x2, y2]);
+                  if (!position) return null;
+                  return (
+                    <div
+                      key={idx}
+                      className={`absolute border-2 cursor-pointer transition-all duration-200 ${
+                        isFieldHighlighted(idx)
+                          ? "border-red-500 bg-red-500 bg-opacity-20"
+                          : "border-transparent hover:border-red-300 hover:bg-red-300 hover:bg-opacity-10"
+                      }`}
+                      style={{
+                        left: position.left,
+                        top: position.top,
+                        width: position.width,
+                        height: position.height,
+                      }}
+                      onMouseEnter={() => debouncedHover(idx)}
+                      onMouseLeave={() => debouncedHover(null)}
+                    />
+                  );
+                }
+              )}
+
+              {fields.map((field) => {
+                const position = getFieldPosition(field);
+                if (!position) return null;
+
+                return (
+                  <div
+                    key={field.id}
+                    className={`absolute border-2 cursor-pointer transition-all duration-200 ${
+                      isFieldHighlighted(field.id)
+                        ? "border-blue-500 bg-blue-500 bg-opacity-20"
+                        : "border-transparent hover:border-blue-300 hover:bg-blue-300 hover:bg-opacity-10"
+                    }`}
+                    style={{
+                      left: position.left,
+                      top: position.top,
+                      width: position.width,
+                      height: position.height,
+                    }}
+                    onClick={() => handleFieldClick(field.id)}
+                    onMouseEnter={() => debouncedHover(field.id)}
+                    onMouseLeave={() => debouncedHover(null)}
+                    title={`${field.label}: ${field.content.value}`}
+                  />
+                );
+              })}
+            </div>
+          );
+        })}
 
         <div className="absolute  bottom-4 flex flex-col bg-gray-900 rounded-lg shadow-lg">
           <button

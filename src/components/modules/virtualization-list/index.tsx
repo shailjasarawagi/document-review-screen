@@ -15,8 +15,9 @@ interface RowProps {
   showDropdown: number | null;
   onFieldSelect: (fieldId: number) => void;
   onFieldHover: (fieldId: number | null) => void;
-  onFieldRemove: (fieldId: number) => void;
+  onFieldRemove: (fieldId: number, event: React.MouseEvent) => void;
   onDropdownToggle: (fieldId: number, event: React.MouseEvent) => void;
+  dropdownRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 const Row: React.FC<RowProps> = ({
@@ -30,12 +31,13 @@ const Row: React.FC<RowProps> = ({
   onFieldHover,
   onFieldRemove,
   onDropdownToggle,
+  dropdownRef,
 }) => {
-  const handleRemoveField = (fieldId: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    onFieldRemove(fieldId);
-    onDropdownToggle(fieldId, event);
-  };
+  // const handleRemoveField = (fieldId: number, event: React.MouseEvent) => {
+  // event.stopPropagation();
+  // onFieldRemove(fieldId);
+  // onDropdownToggle(fieldId, event);
+  // };
 
   return (
     <div
@@ -85,9 +87,13 @@ const Row: React.FC<RowProps> = ({
               </button>
 
               {showDropdown === field.id && (
-                <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg z-10">
+                <div
+                  className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg z-10"
+                  ref={dropdownRef}
+                >
                   <button
-                    onClick={(e) => handleRemoveField(field?.id, e)}
+                    // onClick={(e) => handleRemoveField(field?.id, e)}
+                    onClick={(e) => onFieldRemove(field.id, e)}
                     className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                     aria-label="trash"
                   >

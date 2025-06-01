@@ -20,7 +20,5 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }
   }, []);
 
-  return (
-    <div className="min-h-screen bg-background text-foreground">{children}</div>
-  );
+  return <div className="min-h-screen ">{children}</div>;
 }

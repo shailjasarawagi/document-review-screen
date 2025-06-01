@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { Field } from "../../../types";
 
 import Row from "../virtualization-list";
 import { FixedSizeList as List } from "react-window";
+import { ConfirmationModal } from "../confirmation-modal";
 interface FieldsSidebarProps {
   fields: Field[];
   selectedFields: Set<number>;
@@ -26,15 +27,36 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
 }) => {
   const [showDropdown, setShowDropdown] = useState<number | null>(null);
   const [listHeight, setListHeight] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showRemoveConfirmModal, setShowRemoveConfirmModal] = useState(false);
+  const [fieldToRemove, setFieldToRemove] = useState<number | null>(null);
 
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        // Ensure the click is not on the MoreVertical button
+        !(event.target as HTMLElement).closest(
+          '[aria-label="More options menu"]'
+        )
+      ) {
+        setShowDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const calculateHeight = () => {
-      if (containerRef.current) {
+      if (containerRef.current && headerRef?.current) {
         const containerHeight = containerRef.current.clientHeight;
-        const headerHeight = 120;
-        setListHeight(containerHeight - headerHeight);
+        const headerHeight = headerRef.current.getBoundingClientRect().height;
+        setListHeight(containerHeight - headerHeight - 60);
       }
     };
 
@@ -48,12 +70,37 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
     setShowDropdown(showDropdown === fieldId ? null : fieldId);
   };
 
+  const handleRemoveFieldRequest = (
+    fieldId: number,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation();
+    setFieldToRemove(fieldId);
+    setShowRemoveConfirmModal(true);
+    setShowDropdown(null); // Close dropdown
+  };
+
+  const handleRemoveConfirm = () => {
+    if (fieldToRemove !== null) {
+      onFieldRemove(fieldToRemove);
+    }
+    setShowRemoveConfirmModal(false);
+    setFieldToRemove(null);
+  };
+
+  const handleRemoveCancel = () => {
+    setShowRemoveConfirmModal(false);
+    setFieldToRemove(null);
+  };
   return (
     <div
       ref={containerRef}
       className="w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col h-full"
     >
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div
+        className="p-4 border-b border-gray-200 dark:border-gray-700"
+        ref={headerRef}
+      >
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           Fields
         </h2>
@@ -77,7 +124,7 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
         <List
           height={listHeight}
           itemCount={fields.length}
-          itemSize={70}
+          itemSize={78}
           width="100%"
         >
           {({ index }) => (
@@ -90,8 +137,9 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
                 showDropdown={showDropdown}
                 onFieldSelect={onFieldSelect}
                 onFieldHover={onFieldHover}
-                onFieldRemove={onFieldRemove}
+                onFieldRemove={handleRemoveFieldRequest}
                 onDropdownToggle={handleDropdownToggle}
+                dropdownRef={dropdownRef}
               />
             </div>
           )}
@@ -106,9 +154,9 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
         </button>
         <button
           onClick={onConfirm}
-          disabled={selectedFields.size === 0}
+          disabled={selectedFields.size <= 1}
           className={`w-full px-4 py-2 text-sm rounded-md ${
-            selectedFields.size > 0
+            selectedFields.size > 1
               ? "bg-blue-600 text-white hover:bg-blue-700"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
@@ -116,6 +164,14 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
           Confirm ({selectedFields.size})
         </button>
       </div>
+
+      <ConfirmationModal
+        isOpen={showRemoveConfirmModal}
+        onClose={handleRemoveCancel}
+        onConfirm={handleRemoveConfirm}
+        selectedCount={1}
+        message="Are you sure you want to remove this field?"
+      />
     </div>
   );
 };

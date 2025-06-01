@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { DocumentViewer } from "../../modules/document-viewer";
 import { FieldsSidebar } from "../../modules/fields-sidebar";
 import { ConfirmationModal } from "../../modules/confirmation-modal";
@@ -15,10 +15,9 @@ function ReviewScreen() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  // const [availableFields, setAvailableFields] = useState<any[]>([]);
   const [allFields, setAllFields] = useState<any[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(false);
-
+  const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   useEffect(() => {
     if (sections.length > 0) {
       const fields = getAllFields(sections);
@@ -52,7 +51,12 @@ function ReviewScreen() {
     })(),
     []
   );
-
+  useEffect(() => {
+    const targetPage = pageRefs.current[currentPage - 1];
+    if (targetPage) {
+      targetPage.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [currentPage]);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey) {
@@ -60,12 +64,6 @@ function ReviewScreen() {
           case "a":
             event.preventDefault();
             handleSelectAll();
-            break;
-          case "Enter":
-            event.preventDefault();
-            if (selectedFields.size > 0) {
-              setShowConfirmModal(true);
-            }
             break;
         }
       }
@@ -94,15 +92,16 @@ function ReviewScreen() {
         event.preventDefault();
         handleFieldSelect(hoveredField);
       }
+
+      if (event.key === "Enter" && selectedFields.size > 1) {
+        event.preventDefault();
+        setShowConfirmModal(true);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedFields, hoveredField, availableFields]);
-
-  const currentImage = useMemo(() => {
-    return documentInfo?.pages[currentPage - 1]?.image || null;
-  }, [documentInfo, currentPage]);
 
   const fieldsPerPage = useMemo(() => {
     const counts: Record<number, number> = {};
@@ -163,7 +162,7 @@ function ReviewScreen() {
   };
 
   const handleConfirm = () => {
-    if (selectedFields.size > 0) {
+    if (selectedFields.size > 1) {
       setShowConfirmModal(true);
     }
   };
@@ -202,33 +201,17 @@ function ReviewScreen() {
 
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1">
-          {/* {documentInfo.pages.map((page, index) => (
-            <DocumentViewer
-              key={index}
-              imageUrl={page.image.url}
-              imageWidth={page.image.width}
-              imageHeight={page.image.height}
-              selectedFields={selectedFields}
-              hoveredField={hoveredField}
-              onFieldHover={debouncedSetHoveredField}
-              fields={availableFields}
-              bboxes={bboxes}
-            />
-            
-          ))} */}
-
-          {currentImage && (
-            <DocumentViewer
-              imageUrl={currentImage.url}
-              imageWidth={currentImage.width}
-              imageHeight={currentImage.height}
-              selectedFields={selectedFields}
-              hoveredField={hoveredField}
-              onFieldHover={setHoveredField}
-              fields={availableFields}
-              bboxes={bboxes}
-            />
-          )}
+          <DocumentViewer
+            selectedFields={selectedFields}
+            hoveredField={hoveredField}
+            onFieldHover={setHoveredField}
+            fields={availableFields}
+            bboxes={bboxes}
+            documentInfo={documentInfo}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
+            pageRefs={pageRefs}
+          />
         </div>
 
         <FieldsSidebar

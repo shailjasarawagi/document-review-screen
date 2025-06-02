@@ -25,8 +25,22 @@ export const getRandomBadgeColor = (id: number): string => {
   return colors[id % colors.length];
 };
 
+interface Section {
+  children: (Field | LineItem)[];
+  id: number;
+  title: string;
+  type: string;
+}
+
+interface LineItem {
+  children: Field[][][];
+  id: number;
+  label: string;
+  type: "line_item";
+}
+
 export const getAllFields = (
-  sections: any
+  sections: Section[]
 ): {
   regularFields: Field[];
   columnFields: Field[];
@@ -34,21 +48,20 @@ export const getAllFields = (
   const regularFields: Field[] = [];
   const columnFields: Field[] = [];
 
-  sections.forEach((section: any) => {
-    section.children.forEach((child: any) => {
-      if (child.type === "line_item" && child.children) {
-        child.children.forEach((group: any) => {
-          group.forEach((row: any) => {
-            row.forEach((field: any) => {
-              columnFields.push(field);
-            });
-          });
-        });
+  for (const section of sections) {
+    for (const child of section.children) {
+      if (child.type === "line_item") {
+        const lineItem = child as LineItem;
+        for (const group of lineItem.children) {
+          for (const row of group) {
+            columnFields.push(...row);
+          }
+        }
       } else {
         regularFields.push(child as Field);
       }
-    });
-  });
+    }
+  }
 
   return { regularFields, columnFields };
 };

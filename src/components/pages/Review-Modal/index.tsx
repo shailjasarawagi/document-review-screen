@@ -1,21 +1,39 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+  Suspense,
+} from "react";
 import { DocumentViewer } from "../../modules/document-viewer";
 import { FieldsSidebar } from "../../modules/fields-sidebar";
-import { ConfirmationModal } from "../../modules/confirmation-modal";
-import { SuccessModal } from "../../modules/success-modal";
+
 import { useDocumentData } from "../../../hooks/useDocumentData";
 import { getAllFields } from "../../../utils/fieldutils";
 import { Header } from "../../modules/header";
 import { PageNavigation } from "../../elements/pageNavigation";
+import debounce from "debounce";
 
-function ReviewScreen() {
+const ConfirmationModal = React.lazy(() =>
+  import("../../modules/confirmation-modal").then((module) => ({
+    default: module.ConfirmationModal,
+  }))
+);
+const SuccessModal = React.lazy(() =>
+  import("../../modules/success-modal").then((module) => ({
+    default: module.SuccessModal,
+  }))
+);
+
+const ReviewScreen = () => {
   const { bboxes, sections, documentInfo, loading } = useDocumentData();
   const [selectedFields, setSelectedFields] = useState<Set<number>>(new Set());
   const [hoveredField, setHoveredField] = useState<number | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [allFields, setAllFields] = useState<any[]>([]);
+  // const [allFields, setAllFields] = useState<any[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(false);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [regularFields, setRegularFields] = useState<any[]>([]);
@@ -34,27 +52,16 @@ function ReviewScreen() {
     [documentInfo]
   );
 
-  const availableFields = useMemo(() => {
-    return [...regularFields, ...columnFields].filter(
-      (field) => field.content.page === currentPage
-    );
-  }, [regularFields, columnFields, currentPage]);
+  const availableFields = useMemo(
+    () =>
+      [...regularFields, ...columnFields].filter(
+        (field) => field.content.page === currentPage
+      ),
+    [regularFields, columnFields, currentPage]
+  );
 
   const debouncedSetHoveredField = useCallback(
-    (() => {
-      let rafId: number;
-      let lastCall = 0;
-      return (fieldId: number | null) => {
-        const now = performance.now();
-        if (now - lastCall < 16) return;
-
-        cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => {
-          setHoveredField(fieldId);
-          lastCall = now;
-        });
-      };
-    })(),
+    debounce((fieldId: number | null) => setHoveredField(fieldId), 16),
     []
   );
   useEffect(() => {
@@ -109,75 +116,72 @@ function ReviewScreen() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedFields, hoveredField, availableFields]);
 
-  const fieldsPerPage = useMemo(() => {
-    const counts: Record<number, number> = {};
-    allFields.forEach((field) => {
-      const page = field.content.page;
-      counts[page] = (counts[page] || 0) + 1;
-    });
-    return counts;
-  }, [allFields]);
+  const fieldsPerPage = useMemo(
+    () =>
+      [...regularFields, ...columnFields].reduce((counts, field) => {
+        const page = field.content.page;
+        counts[page] = (counts[page] || 0) + 1;
+        return counts;
+      }, {} as Record<number, number>),
+    [regularFields, columnFields]
+  );
 
   const handlePageChange = useCallback(
     (page: number) => {
       if (page === currentPage || isPageLoading) return;
-
       setIsPageLoading(true);
       setHoveredField(null);
-
-      requestAnimationFrame(() => {
-        setCurrentPage(page);
-        if ("requestIdleCallback" in window) {
-          requestIdleCallback(() => setIsPageLoading(false));
-        } else {
-          setTimeout(() => setIsPageLoading(false), 50);
-        }
-      });
+      setCurrentPage(page);
+      setTimeout(() => setIsPageLoading(false), 50);
     },
     [currentPage, isPageLoading]
   );
 
-  const handleFieldSelect = (fieldId: number) => {
-    const newSelected = new Set(selectedFields);
-    if (newSelected.has(fieldId)) {
+  const handleFieldSelect = useCallback((fieldId: number) => {
+    setSelectedFields((prev) => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(fieldId)) {
+        newSelected.delete(fieldId);
+      } else {
+        newSelected.add(fieldId);
+      }
+      return newSelected;
+    });
+  }, []);
+
+  const handleFieldRemove = useCallback((fieldId: number) => {
+    setRegularFields((prev) => prev.filter((field) => field.id !== fieldId));
+    setColumnFields((prev) => prev.filter((field) => field.id !== fieldId));
+    setSelectedFields((prev) => {
+      const newSelected = new Set(prev);
       newSelected.delete(fieldId);
-    } else {
-      newSelected.add(fieldId);
-    }
-    setSelectedFields(newSelected);
-  };
+      return newSelected;
+    });
+  }, []);
 
-  const handleFieldRemove = (fieldId: number) => {
-    const newFields = allFields.filter((field) => field.id !== fieldId);
-    setAllFields(newFields);
-
-    const newSelected = new Set(selectedFields);
-    newSelected.delete(fieldId);
-    setSelectedFields(newSelected);
-  };
-
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     const pageFieldIds = availableFields.map((field) => field.id);
-    if (pageFieldIds.every((id) => selectedFields.has(id))) {
-      const newSelected = new Set(selectedFields);
-      pageFieldIds.forEach((id) => newSelected.delete(id));
-      setSelectedFields(newSelected);
-    } else {
-      setSelectedFields((prev) => new Set([...prev, ...pageFieldIds]));
-    }
-  };
+    setSelectedFields((prev) => {
+      const newSelected = new Set(prev);
+      if (pageFieldIds.every((id) => prev.has(id))) {
+        pageFieldIds.forEach((id) => newSelected.delete(id));
+      } else {
+        pageFieldIds.forEach((id) => newSelected.add(id));
+      }
+      return newSelected;
+    });
+  }, [availableFields]);
 
-  const handleConfirm = () => {
+  const handleConfirm = useCallback(() => {
     if (selectedFields.size > 1) {
       setShowConfirmModal(true);
     }
-  };
+  }, [selectedFields]);
 
-  const handleConfirmModalConfirm = () => {
+  const handleConfirmModalConfirm = useCallback(() => {
     setShowConfirmModal(false);
     setShowSuccessModal(true);
-  };
-
+  }, []);
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -234,19 +238,24 @@ function ReviewScreen() {
         />
       </div>
 
-      <ConfirmationModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirmModalConfirm}
-        selectedCount={selectedFields.size}
-      />
-
-      <SuccessModal
-        isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-      />
+      <Suspense fallback={<div>Loading...</div>}>
+        {showConfirmModal && (
+          <ConfirmationModal
+            isOpen={showConfirmModal}
+            onClose={() => setShowConfirmModal(false)}
+            onConfirm={handleConfirmModalConfirm}
+            selectedCount={selectedFields.size}
+          />
+        )}
+        {showSuccessModal && (
+          <SuccessModal
+            isOpen={showSuccessModal}
+            onClose={() => setShowSuccessModal(false)}
+          />
+        )}
+      </Suspense>
     </div>
   );
-}
+};
 
 export default ReviewScreen;

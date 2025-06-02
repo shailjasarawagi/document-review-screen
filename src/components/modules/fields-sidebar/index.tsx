@@ -1,9 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { Field } from "../../../types";
 
 import Row from "../virtualization-list";
 import { FixedSizeList as List } from "react-window";
-import { ConfirmationModal } from "../confirmation-modal";
 interface FieldsSidebarProps {
   fields: Field[];
   selectedFields: Set<number>;
@@ -16,6 +21,12 @@ interface FieldsSidebarProps {
   regularFields: Field[];
   columnFields: Field[];
 }
+
+const ConfirmationModal = React.lazy(() =>
+  import("../../modules/confirmation-modal").then((module) => ({
+    default: module.ConfirmationModal,
+  }))
+);
 
 export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
   regularFields,
@@ -73,35 +84,41 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
     return () => window.removeEventListener("resize", calculateHeight);
   }, []);
 
-  const handleDropdownToggle = (fieldId: number, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setShowDropdown(showDropdown === fieldId ? null : fieldId);
-  };
+  const handleDropdownToggle = useCallback(
+    (fieldId: number, event: React.MouseEvent) => {
+      event.stopPropagation();
+      setShowDropdown((prev) => (prev === fieldId ? null : fieldId));
+    },
+    []
+  );
+  const handleRemoveFieldRequest = useCallback(
+    (fieldId: number, event: React.MouseEvent) => {
+      event.stopPropagation();
+      setFieldToRemove(fieldId);
+      setShowRemoveConfirmModal(true);
+      setShowDropdown(null);
+    },
+    []
+  );
 
-  const handleRemoveFieldRequest = (
-    fieldId: number,
-    event: React.MouseEvent
-  ) => {
-    event.stopPropagation();
-    setFieldToRemove(fieldId);
-    setShowRemoveConfirmModal(true);
-    setShowDropdown(null);
-  };
-
-  const handleRemoveConfirm = () => {
+  const handleRemoveConfirm = useCallback(() => {
     if (fieldToRemove !== null) {
       onFieldRemove(fieldToRemove);
     }
     setShowRemoveConfirmModal(false);
     setFieldToRemove(null);
-  };
+  }, [fieldToRemove, onFieldRemove]);
 
-  const handleRemoveCancel = () => {
+  const handleRemoveCancel = useCallback(() => {
     setShowRemoveConfirmModal(false);
     setFieldToRemove(null);
-  };
+  }, []);
 
-  const currentFields = activeTab === "regular" ? regularFields : columnFields;
+  const currentFields = useMemo(
+    () => (activeTab === "regular" ? regularFields : columnFields),
+    [activeTab, regularFields, columnFields]
+  );
+
   return (
     <div
       ref={containerRef}
@@ -194,13 +211,17 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
         </button>
       </div>
 
-      <ConfirmationModal
-        isOpen={showRemoveConfirmModal}
-        onClose={handleRemoveCancel}
-        onConfirm={handleRemoveConfirm}
-        selectedCount={1}
-        message="Are you sure you want to remove this field?"
-      />
+      <React.Suspense fallback={<div>Loading...</div>}>
+        {showRemoveConfirmModal && (
+          <ConfirmationModal
+            isOpen={showRemoveConfirmModal}
+            onClose={handleRemoveCancel}
+            onConfirm={handleRemoveConfirm}
+            selectedCount={1}
+            message="Are you sure you want to remove this field?"
+          />
+        )}
+      </React.Suspense>
     </div>
   );
 };

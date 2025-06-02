@@ -4,6 +4,7 @@ import { Maximize2, Minus, Plus, ZoomIn, ZoomOut } from "lucide-react";
 import type { Field, BoundingBox, ZoomLevel } from "../../../types";
 import { Button } from "../../elements/button";
 import { Select } from "../../elements/select";
+import debounce from "debounce";
 
 interface DocumentViewerProps {
   selectedFields: Set<number>;
@@ -91,14 +92,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   //     observer.disconnect();
   //   };
   // }, [visiblePage, onPageChange, actualZoom]);
-
-  const debounce = useCallback((func: Function, wait: number) => {
-    let timeout: any;
-    return (...args: any[]) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func(...args), wait);
-    };
-  }, []);
 
   const detectVisiblePage = useCallback(() => {
     if (!containerRef.current || !pageRefs.current) return;

@@ -1,3 +1,5 @@
+/*Button component with diffrent variant and color */
+
 import type React from "react";
 
 import { forwardRef } from "react";
@@ -22,6 +24,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
+    //classes according to variant
     const baseClasses =
       " inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
 

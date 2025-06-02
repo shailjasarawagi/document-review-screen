@@ -1,3 +1,4 @@
+/* Header Compoent */
 import { Bell, HelpCircle, MoreVertical } from "lucide-react";
 import { useTheme } from "../../../hooks/use-theme";
 import { ThemeToggle } from "../../elements/theme-toggle";

@@ -1,3 +1,4 @@
+/* Theme toggle */
 import type React from "react";
 import { Sun, Moon } from "lucide-react";
 import { Button } from "../button";

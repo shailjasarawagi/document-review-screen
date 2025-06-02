@@ -39,59 +39,24 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   pageRefs,
 }) => {
   const [currentZoom, setCurrentZoom] = useState<ZoomLevel>(zoomLevels[0]);
-  const imageWidth = 1700,
-    imageHeight = 2200;
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  // const [visiblePage, setVisiblePage] = useState(currentPage);
-  const [zoomLevel, setZoomLevel] = useState(1);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const getActualZoom = () => {
-    if (currentZoom.value === 0) {
-      const scaleX = containerSize.width / imageWidth;
-      const scaleY = containerSize.height / imageHeight;
-      return Math.min(scaleX, scaleY, 1);
-    }
-    return currentZoom.value;
-  };
-
-  const actualZoom = getActualZoom();
-
-  // useEffect(() => {
-  //   const container = containerRef.current;
-  //   if (!container) return;
-
-  //   const observer = new IntersectionObserver(
-  //     (entries) => {
-  //       entries.forEach((entry) => {
-  //         if (entry.isIntersecting) {
-  //           const pageIndex = Number(
-  //             entry.target.getAttribute("data-page-index")
-  //           );
-  //           if (pageIndex + 1 !== visiblePage) {
-  //             setVisiblePage(pageIndex + 1);
-  //             onPageChange(pageIndex + 1);
-  //           }
-  //         }
-  //       });
-  //     },
-  //     {
-  //       root: container,
-  //       threshold: 0.5,
-  //     }
-  //   );
-
-  //   const pages = container.querySelectorAll("[data-page-index]");
-  //   pages.forEach((page) => observer.observe(page));
-
-  //   return () => {
-  //     pages.forEach((page) => observer.unobserve(page));
-  //     observer.disconnect();
-  //   };
-  // }, [visiblePage, onPageChange, actualZoom]);
+  const getActualZoom = useCallback(
+    (pageWidth: number, pageHeight: number) => {
+      if (currentZoom.value === 0) {
+        const scaleX = containerSize.width / pageWidth;
+        const scaleY = containerSize.height / pageHeight;
+        return Math.min(scaleX, scaleY, 1);
+      }
+      return currentZoom.value;
+    },
+    [currentZoom, containerSize]
+  );
 
   const detectVisiblePage = useCallback(() => {
     if (!containerRef.current || !pageRefs.current) return;
@@ -108,8 +73,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           Math.max(rect.top, containerRect.top);
         const ratio = visibleHeight / rect.height;
 
-        if (ratio > maxRatio && ratio > 0.1) {
-          // At least 10% visible
+        if (ratio > maxRatio && ratio > 0.3) {
+          // Adjusted threshold to 30%
           maxRatio = ratio;
           visiblePage = index + 1;
         }
@@ -119,7 +84,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     if (visiblePage !== currentPage) {
       onPageChange(visiblePage);
     }
-  }, [currentPage, onPageChange]);
+  }, [currentPage, onPageChange, pageRefs]);
 
   const debouncedDetectVisiblePage = useCallback(
     debounce(detectVisiblePage, 100),
@@ -135,7 +100,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       },
       {
         root: containerRef.current,
-        threshold: [0.1, 0.5, 0.9],
+        threshold: 0.3,
       }
     );
 
@@ -148,7 +113,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         observerRef.current.disconnect();
       }
     };
-  }, [debouncedDetectVisiblePage]);
+  }, [debouncedDetectVisiblePage, pageRefs.current]);
 
   useEffect(() => {
     const updateContainerSize = () => {
@@ -184,7 +149,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           : Math.max(currentIndex - 1, 0);
       setCurrentZoom(zoomLevels[newIndex]);
     },
-    [currentZoom]
+    [currentZoom, pageRefs?.current]
   );
 
   useEffect(() => {
@@ -213,8 +178,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [adjustZoom, toggleFullscreen]);
 
+  // Field position calculation
   const getFieldPosition = useCallback(
-    (field: Field) => {
+    (field: Field, actualZoom: number) => {
       if (!field.content.position || field.content.position.length !== 4) {
         return null;
       }
@@ -226,9 +192,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         height: (y2 - y1) * actualZoom,
       };
     },
-    [imageWidth, imageHeight, currentPage, actualZoom]
+    [currentPage]
   );
 
+  //debouncing hover on box and fields
   const debouncedHover = useCallback(
     (fieldId: number | null) => {
       const debounce = setTimeout(() => onFieldHover(fieldId), 16);
@@ -241,6 +208,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     console.log("Field clicked:", fieldId, isFullscreen);
   }, []);
 
+  //filed highlight when hover
   const isFieldHighlighted = useCallback(
     (fieldId: number) => {
       return selectedFields.has(fieldId) || hoveredField === fieldId;
@@ -248,11 +216,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     [selectedFields, hoveredField]
   );
 
+  // Bounding box position
   const getFieldPositions = useCallback(
-    (field: [number, number, number, number]) => {
-      if (!field || field.length !== 4) {
-        return null;
-      }
+    (
+      field: [number, number, number, number],
+
+      actualZoom: number
+    ) => {
+      if (!field || field.length !== 4) return null;
       const [x1, y1, x2, y2] = field;
       return {
         left: x1 * actualZoom,
@@ -261,9 +232,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         height: (y2 - y1) * actualZoom,
       };
     },
-    [imageWidth, imageHeight, currentPage, actualZoom]
+    [currentPage]
   );
 
+  //filter boxpages according to page number
   const boxesByPage = useMemo(() => {
     if (!bboxes || bboxes.length === 0) {
       return {};
@@ -279,27 +251,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   }, [bboxes]);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleWheel = (event: WheelEvent) => {
-      if (event.ctrlKey) {
-        event.preventDefault();
-        setZoomLevel((prev) => {
-          const delta = event.deltaY < 0 ? 0.1 : -0.1;
-          const newZoom = Math.max(0.5, Math.min(prev + delta, 3)); // Limit zoom: 0.5x to 3x
-          return newZoom;
-        });
-      }
-    };
-
-    container.addEventListener("wheel", handleWheel, { passive: false });
-    return () => container.removeEventListener("wheel", handleWheel);
-  }, []);
-
-  useEffect(() => {
     debouncedDetectVisiblePage();
-  }, [zoomLevel, debouncedDetectVisiblePage]);
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-gray-100 dark:bg-gray-800">
@@ -315,7 +268,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           </Button>
 
           <Select
-            value={currentZoom || `${Math.round(actualZoom * 100)}%`}
+            value={currentZoom}
             onValueChange={setCurrentZoom}
             options={zoomLevels}
           />
@@ -341,14 +294,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       <div ref={containerRef} className="flex-1 overflow-auto p-4">
         {documentInfo.pages.map((page: any, pageIndex: number) => {
           const pageNumber = pageIndex + 1;
-
+          const pageWidth = page.image.width;
+          const pageHeight = page.image.height;
+          const actualZoom = getActualZoom(pageWidth, pageHeight);
           const pageBBoxes = boxesByPage[pageNumber] || [];
 
           return (
             <div
               key={pageIndex}
-              // data-page-index={pageIndex}
-              // id={`page-${pageIndex}`}
+              data-page-index={pageIndex}
+              id={`page-${pageIndex}`}
               className="relative mx-auto bg-white shadow-lg mb-4"
               style={{
                 width: page.image.width * actualZoom,
@@ -370,7 +325,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   [x0, y0, x2, y2]: [number, number, number, number],
                   idx: number
                 ) => {
-                  const position = getFieldPositions([x0, y0, x2, y2]);
+                  const position = getFieldPositions(
+                    [x0, y0, x2, y2],
+                    actualZoom
+                  );
                   if (!position) return null;
                   return (
                     <div
@@ -394,7 +352,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               )}
 
               {fields.map((field) => {
-                const position = getFieldPosition(field);
+                const position = getFieldPosition(field, actualZoom);
                 if (!position) return null;
 
                 return (

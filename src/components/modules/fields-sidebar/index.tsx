@@ -9,6 +9,7 @@ import type { Field } from "../../../types";
 
 import Row from "../virtualization-list";
 import { FixedSizeList as List } from "react-window";
+import { ConfirmationModal } from "../confirmation-modal";
 interface FieldsSidebarProps {
   fields: Field[];
   selectedFields: Set<number>;
@@ -21,12 +22,6 @@ interface FieldsSidebarProps {
   regularFields: Field[];
   columnFields: Field[];
 }
-
-const ConfirmationModal = React.lazy(() =>
-  import("../../modules/confirmation-modal").then((module) => ({
-    default: module.ConfirmationModal,
-  }))
-);
 
 export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
   regularFields,
@@ -55,6 +50,7 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node) &&
+        // Ensure the click is not on the MoreVertical button
         !(event.target as HTMLElement).closest(
           '[aria-label="More options menu"]'
         )
@@ -91,6 +87,7 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
     },
     []
   );
+
   const handleRemoveFieldRequest = useCallback(
     (fieldId: number, event: React.MouseEvent) => {
       event.stopPropagation();
@@ -113,7 +110,6 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
     setShowRemoveConfirmModal(false);
     setFieldToRemove(null);
   }, []);
-
   const currentFields = useMemo(
     () => (activeTab === "regular" ? regularFields : columnFields),
     [activeTab, regularFields, columnFields]
@@ -211,17 +207,15 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
         </button>
       </div>
 
-      <React.Suspense fallback={<div>Loading...</div>}>
-        {showRemoveConfirmModal && (
-          <ConfirmationModal
-            isOpen={showRemoveConfirmModal}
-            onClose={handleRemoveCancel}
-            onConfirm={handleRemoveConfirm}
-            selectedCount={1}
-            message="Are you sure you want to remove this field?"
-          />
-        )}
-      </React.Suspense>
+      {showRemoveConfirmModal && (
+        <ConfirmationModal
+          isOpen={showRemoveConfirmModal}
+          onClose={handleRemoveCancel}
+          onConfirm={handleRemoveConfirm}
+          selectedCount={1}
+          message="Are you sure you want to remove this field?"
+        />
+      )}
     </div>
   );
 };

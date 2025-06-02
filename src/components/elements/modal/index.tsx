@@ -1,5 +1,6 @@
-import type React from "react";
+/*Modal component */
 
+import type React from "react";
 import { useEffect } from "react";
 
 interface ModalProps {

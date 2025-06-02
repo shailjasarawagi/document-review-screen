@@ -2,7 +2,6 @@
 node_modules/
 npm-debug.log
 yarn-error.log
-yarn.lock
 package-lock.json
 
 # Build outputs
@@ -39,10 +38,8 @@ coverage/
 *.lcov
 
 # Dependency caches
-/node_modules
 .pnp.*
 .yarn/*
-!package-lock.json
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases

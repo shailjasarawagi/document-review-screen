@@ -1,39 +1,20 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  useRef,
-  Suspense,
-} from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { DocumentViewer } from "../../modules/document-viewer";
 import { FieldsSidebar } from "../../modules/fields-sidebar";
-
+import { ConfirmationModal } from "../../modules/confirmation-modal";
+import { SuccessModal } from "../../modules/success-modal";
 import { useDocumentData } from "../../../hooks/useDocumentData";
 import { getAllFields } from "../../../utils/fieldutils";
 import { Header } from "../../modules/header";
 import { PageNavigation } from "../../elements/pageNavigation";
-import debounce from "debounce";
 
-const ConfirmationModal = React.lazy(() =>
-  import("../../modules/confirmation-modal").then((module) => ({
-    default: module.ConfirmationModal,
-  }))
-);
-const SuccessModal = React.lazy(() =>
-  import("../../modules/success-modal").then((module) => ({
-    default: module.SuccessModal,
-  }))
-);
-
-const ReviewScreen = () => {
+function ReviewScreen() {
   const { bboxes, sections, documentInfo, loading } = useDocumentData();
   const [selectedFields, setSelectedFields] = useState<Set<number>>(new Set());
   const [hoveredField, setHoveredField] = useState<number | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  // const [allFields, setAllFields] = useState<any[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(false);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [regularFields, setRegularFields] = useState<any[]>([]);
@@ -60,16 +41,37 @@ const ReviewScreen = () => {
     [regularFields, columnFields, currentPage]
   );
 
+  const availableRegularFields = useMemo(
+    () =>
+      [...regularFields].filter((field) => field.content.page === currentPage),
+    [regularFields, currentPage]
+  );
+
   const debouncedSetHoveredField = useCallback(
-    debounce((fieldId: number | null) => setHoveredField(fieldId), 16),
+    (() => {
+      let rafId: number;
+      let lastCall = 0;
+      return (fieldId: number | null) => {
+        const now = performance.now();
+        if (now - lastCall < 16) return;
+
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          setHoveredField(fieldId);
+          lastCall = now;
+        });
+      };
+    })(),
     []
   );
+
   useEffect(() => {
     const targetPage = pageRefs.current[currentPage - 1];
     if (targetPage) {
       targetPage.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [currentPage]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey) {
@@ -128,13 +130,21 @@ const ReviewScreen = () => {
 
   const handlePageChange = useCallback(
     (page: number) => {
-      if (page === currentPage || isPageLoading) return;
+      if (isPageLoading) return;
+
       setIsPageLoading(true);
       setHoveredField(null);
-      setCurrentPage(page);
-      setTimeout(() => setIsPageLoading(false), 50);
+
+      requestAnimationFrame(() => {
+        setCurrentPage(page);
+        if ("requestIdleCallback" in window) {
+          requestIdleCallback(() => setIsPageLoading(false));
+        } else {
+          setTimeout(() => setIsPageLoading(false), 50);
+        }
+      });
     },
-    [currentPage, isPageLoading]
+    [isPageLoading]
   );
 
   const handleFieldSelect = useCallback((fieldId: number) => {
@@ -182,6 +192,7 @@ const ReviewScreen = () => {
     setShowConfirmModal(false);
     setShowSuccessModal(true);
   }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -215,7 +226,7 @@ const ReviewScreen = () => {
             selectedFields={selectedFields}
             hoveredField={hoveredField}
             onFieldHover={setHoveredField}
-            fields={availableFields}
+            fields={availableRegularFields}
             bboxes={bboxes}
             documentInfo={documentInfo}
             currentPage={currentPage}
@@ -225,7 +236,7 @@ const ReviewScreen = () => {
         </div>
 
         <FieldsSidebar
-          regularFields={regularFields}
+          regularFields={availableRegularFields}
           columnFields={columnFields}
           fields={availableFields}
           selectedFields={selectedFields}
@@ -238,24 +249,22 @@ const ReviewScreen = () => {
         />
       </div>
 
-      <Suspense fallback={<div>Loading...</div>}>
-        {showConfirmModal && (
-          <ConfirmationModal
-            isOpen={showConfirmModal}
-            onClose={() => setShowConfirmModal(false)}
-            onConfirm={handleConfirmModalConfirm}
-            selectedCount={selectedFields.size}
-          />
-        )}
-        {showSuccessModal && (
-          <SuccessModal
-            isOpen={showSuccessModal}
-            onClose={() => setShowSuccessModal(false)}
-          />
-        )}
-      </Suspense>
+      {showConfirmModal && (
+        <ConfirmationModal
+          isOpen={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          onConfirm={handleConfirmModalConfirm}
+          selectedCount={selectedFields.size}
+        />
+      )}
+      {showSuccessModal && (
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+        />
+      )}
     </div>
   );
-};
+}
 
 export default ReviewScreen;

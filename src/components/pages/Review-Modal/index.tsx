@@ -18,10 +18,14 @@ function ReviewScreen() {
   const [allFields, setAllFields] = useState<any[]>([]);
   const [isPageLoading, setIsPageLoading] = useState(false);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [regularFields, setRegularFields] = useState<any[]>([]);
+  const [columnFields, setColumnFields] = useState<any[]>([]);
+
   useEffect(() => {
     if (sections.length > 0) {
-      const fields = getAllFields(sections);
-      setAllFields(fields);
+      const { regularFields, columnFields } = getAllFields(sections);
+      setRegularFields(regularFields);
+      setColumnFields(columnFields);
     }
   }, [sections]);
 
@@ -31,8 +35,10 @@ function ReviewScreen() {
   );
 
   const availableFields = useMemo(() => {
-    return allFields.filter((field) => field.content.page === currentPage);
-  }, [allFields, currentPage]);
+    return [...regularFields, ...columnFields].filter(
+      (field) => field.content.page === currentPage
+    );
+  }, [regularFields, columnFields, currentPage]);
 
   const debouncedSetHoveredField = useCallback(
     (() => {
@@ -215,6 +221,8 @@ function ReviewScreen() {
         </div>
 
         <FieldsSidebar
+          regularFields={regularFields}
+          columnFields={columnFields}
           fields={availableFields}
           selectedFields={selectedFields}
           hoveredField={hoveredField}

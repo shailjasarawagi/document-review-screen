@@ -25,26 +25,30 @@ export const getRandomBadgeColor = (id: number): string => {
   return colors[id % colors.length];
 };
 
-export const getAllFields = (sections: any[]): Field[] => {
-  const fields: Field[] = [];
+export const getAllFields = (
+  sections: any
+): {
+  regularFields: Field[];
+  columnFields: Field[];
+} => {
+  const regularFields: Field[] = [];
+  const columnFields: Field[] = [];
 
-  sections.forEach((section) => {
-    if (section.children) {
-      section.children.forEach((field: Field) => {
-        if (!field.children) {
-          fields.push(field);
-        }
-      });
-    }
+  sections.forEach((section: any) => {
+    section.children.forEach((child: any) => {
+      if (child.type === "line_item" && child.children) {
+        child.children.forEach((group: any) => {
+          group.forEach((row: any) => {
+            row.forEach((field: any) => {
+              columnFields.push(field);
+            });
+          });
+        });
+      } else {
+        regularFields.push(child as Field);
+      }
+    });
   });
 
-  return fields;
-};
-
-export const getFieldById = (
-  sections: any[],
-  fieldId: number
-): Field | null => {
-  const allFields = getAllFields(sections);
-  return allFields.find((field) => field.id === fieldId) || null;
+  return { regularFields, columnFields };
 };

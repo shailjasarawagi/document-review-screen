@@ -134,7 +134,7 @@ To run Google Lighthouse and generate performance insights:
 
 ![Lighthouse Performance Results](./public/lighthouse.png)
 
-- [Detailed Lighthouse Results](./public/lighthouse..pdf)
+- [Detailed Lighthouse Results](./public/lighthouse.pdf)
 
 ### Documentation
 

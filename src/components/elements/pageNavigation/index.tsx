@@ -105,6 +105,29 @@ export const PageNavigation = memo<PageNavigationProps>(
               <ChevronRight className="w-4 h-4 text-gray-900 dark:text-gray-100" />
             </button>
           </div>
+
+          <div className="flex items-center space-x-2">
+            <label
+              htmlFor="page-jump"
+              className="text-sm text-gray-900 dark:text-gray-100"
+            >
+              Go to:
+            </label>
+            <input
+              id="page-jump"
+              type="number"
+              min="1"
+              max={totalPages}
+              // value={currentPage}
+              onChange={(e) => {
+                const page = Number.parseInt(e.target.value);
+                if (page >= 1 && page <= totalPages) {
+                  onPageChange(page);
+                }
+              }}
+              className="w-16 px-2 py-1 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-500 rounded text-gray-900 dark:text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
         <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">

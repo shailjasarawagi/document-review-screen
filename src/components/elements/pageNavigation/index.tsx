@@ -20,7 +20,7 @@ export const PageNavigation = memo<PageNavigationProps>(
   ({
     currentPage,
     totalPages,
-    // onPageChange,
+    onPageChange,
     fieldsPerPage,
     isLoading = false,
   }) => {
@@ -59,7 +59,7 @@ export const PageNavigation = memo<PageNavigationProps>(
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <button
-              // onClick={() => onPageChange(currentPage - 1)}
+              onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1 || isLoading}
               className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
               aria-label="Go to previous page"
@@ -79,7 +79,7 @@ export const PageNavigation = memo<PageNavigationProps>(
                     </span>
                   ) : (
                     <button
-                      // onClick={() => onPageChange(page as number)}
+                      onClick={() => onPageChange(page as number)}
                       disabled={isLoading}
                       className={`px-3 py-1 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         currentPage === page
@@ -97,7 +97,7 @@ export const PageNavigation = memo<PageNavigationProps>(
             </div>
 
             <button
-              // onClick={() => onPageChange(currentPage + 1)}
+              onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages || isLoading}
               className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
               aria-label="Go to next page"

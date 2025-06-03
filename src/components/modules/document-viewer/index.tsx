@@ -87,7 +87,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   }, [currentPage, onPageChange, pageRefs]);
 
   const debouncedDetectVisiblePage = useCallback(
-    debounce(detectVisiblePage, 100),
+    debounce(detectVisiblePage, 500),
     [detectVisiblePage]
   );
 
@@ -151,6 +151,74 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     },
     [currentZoom, pageRefs?.current]
   );
+  // const adjustZoom = useCallback(
+  //   (direction: "in" | "out") => {
+  //     if (!containerRef.current) return;
+
+  //     // Step 1: Store the current scroll position and viewport center
+  //     const container = containerRef.current;
+  //     const oldScrollTop = container.scrollTop;
+  //     const oldScrollLeft = container.scrollLeft;
+  //     const containerRect = container.getBoundingClientRect();
+  //     const viewportCenterX = containerRect.width / 2;
+  //     const viewportCenterY = containerRect.height / 2;
+
+  //     // Get the current page element (based on currentPage)
+  //     const currentPageEl = pageRefs.current[currentPage - 1];
+  //     if (!currentPageEl) return;
+
+  //     const pageRect = currentPageEl.getBoundingClientRect();
+  //     const pageOffsetTop = pageRect.top - containerRect.top + oldScrollTop;
+  //     const pageOffsetLeft = pageRect.left - containerRect.left + oldScrollLeft;
+
+  //     // Calculate the relative position of the viewport center on the page
+  //     const oldZoom =
+  //       currentZoom.value === 0
+  //         ? getActualZoom(pageRect.width, pageRect.height)
+  //         : currentZoom.value;
+  //     const relativeCenterX =
+  //       (viewportCenterX + oldScrollLeft - pageOffsetLeft) / oldZoom;
+  //     const relativeCenterY =
+  //       (viewportCenterY + oldScrollTop - pageOffsetTop) / oldZoom;
+
+  //     // Step 2: Update zoom level
+  //     const currentIndex = zoomLevels.findIndex(
+  //       (z) => z.value === currentZoom.value
+  //     );
+  //     const newIndex =
+  //       direction === "in"
+  //         ? Math.min(currentIndex + 1, zoomLevels.length - 1)
+  //         : Math.max(currentIndex - 1, 0);
+  //     const newZoomLevel = zoomLevels[newIndex];
+  //     setCurrentZoom(newZoomLevel);
+
+  //     // Step 3: Calculate new scroll position to maintain the same content in view
+  //     setTimeout(() => {
+  //       if (!containerRef.current || !pageRefs.current[currentPage - 1]) return;
+
+  //       const newPageRect =
+  //         pageRefs.current[currentPage - 1]!.getBoundingClientRect();
+  //       const newActualZoom =
+  //         newZoomLevel.value === 0
+  //           ? getActualZoom(newPageRect.width, newPageRect.height)
+  //           : newZoomLevel.value;
+
+  //       // Calculate new scroll positions
+  //       const newScrollLeft =
+  //         relativeCenterX * newActualZoom - viewportCenterX + pageOffsetLeft;
+  //       const newScrollTop =
+  //         relativeCenterY * newActualZoom - viewportCenterY + pageOffsetTop;
+
+  //       // Apply the new scroll positions
+  //       containerRef.current!.scrollTo({
+  //         top: newScrollTop,
+  //         left: newScrollLeft,
+  //         behavior: "auto",
+  //       });
+  //     }, 0); // Use setTimeout to ensure DOM updates are applied
+  //   },
+  //   [currentZoom, pageRefs, currentPage, containerSize, getActualZoom]
+  // );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

@@ -221,7 +221,7 @@ function ReviewScreen() {
       />
 
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden">
           <DocumentViewer
             selectedFields={selectedFields}
             hoveredField={hoveredField}

@@ -1,3 +1,4 @@
+/* Success Modal after selection confirmation */
 import type React from "react";
 import { CheckCircle, X } from "lucide-react";
 import { Modal } from "../../elements/modal";

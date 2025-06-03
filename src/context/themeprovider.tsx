@@ -1,3 +1,5 @@
+/* Theme context provider can be used from store instead localstorage*/
+
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 

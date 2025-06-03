@@ -1,3 +1,9 @@
+/**
+ * DocumentViewer component for displaying document pages with zoom, fullscreen, and field highlighting
+ * @param {DocumentViewerProps} props - Component props
+ * @returns {JSX.Element} Document viewer UI with controls and page display
+ */
+
 import type React from "react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Maximize2, Minus, Plus, ZoomIn, ZoomOut } from "lucide-react";
@@ -18,6 +24,7 @@ interface DocumentViewerProps {
   pageRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
 }
 
+// Predefined zoom levels
 const zoomLevels: ZoomLevel[] = [
   { label: "Fit", value: 0 },
   { label: "75%", value: 0.75 },
@@ -45,6 +52,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const observerRef = useRef<IntersectionObserver | null>(null);
 
+  /**
+   * Calculates the actual zoom level based on the container size and page dimensions.
+   * Falls back to "Fit" behavior if zoom level is set to 0.
+   */
   const getActualZoom = useCallback(
     (pageWidth: number, pageHeight: number) => {
       if (currentZoom.value === 0) {
@@ -57,6 +68,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     [currentZoom, containerSize]
   );
 
+  /**
+   * Detects the most visible page in the container based on IntersectionObserver thresholds.
+   */
   const detectVisiblePage = useCallback(() => {
     if (!containerRef.current || !pageRefs.current) return;
 
@@ -85,11 +99,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   }, [currentPage, onPageChange, pageRefs]);
 
+  // Debounced version of detectVisiblePage to prevent excessive calls
   const debouncedDetectVisiblePage = useCallback(
     debounce(detectVisiblePage, 500),
     [detectVisiblePage]
   );
 
+  /**
+   * Sets up IntersectionObserver to track page visibility
+   * Cleans up observer on component unmount
+   */
   useEffect(() => {
     if (!containerRef.current || !pageRefs.current) return;
 
@@ -114,6 +133,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     };
   }, [debouncedDetectVisiblePage, pageRefs.current]);
 
+  /**
+   * Updates container size on mount and window resize
+   * Ensures proper zoom calculations
+   */
   useEffect(() => {
     const updateContainerSize = () => {
       if (containerRef.current) {
@@ -127,6 +150,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return () => window.removeEventListener("resize", updateContainerSize);
   }, []);
 
+  /**
+   * Toggles fullscreen mode for the document viewer.
+   */
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen();
@@ -137,6 +163,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   }, []);
 
+  /**
+   * Adjusts zoom level up or down
+   * @param {"in" | "out"} direction - Zoom direction
+   */
   const adjustZoom = useCallback(
     (direction: "in" | "out") => {
       const currentIndex = zoomLevels.findIndex(
@@ -150,6 +180,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     },
     [currentZoom, pageRefs?.current]
   );
+
+  /**
+   * Listens for keyboard shortcuts to enhance accessibility and interactivity.
+   */
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -177,7 +211,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [adjustZoom, toggleFullscreen]);
 
-  // Field position calculation
+  /**
+   * Calculates the position of a field on the page based on its dimensions and zoom level.
+   */
   const getFieldPosition = useCallback(
     (field: Field, actualZoom: number) => {
       if (!field.content.position || field.content.position.length !== 4) {
@@ -194,7 +230,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     [currentPage]
   );
 
-  //debouncing hover on box and fields
+  /**
+   * Debounced handler for field hover events
+   * @param {number | null} fieldId - ID of the hovered field or null
+   * @returns {() => void} Cleanup function
+   */
   const debouncedHover = useCallback(
     (fieldId: number | null) => {
       const debounce = setTimeout(() => onFieldHover(fieldId), 16);
@@ -230,6 +270,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   //   return map;
   // }, [bboxes]);
 
+  /**
+   * Triggers initial page visibility detection
+   */
   useEffect(() => {
     debouncedDetectVisiblePage();
   }, []);
@@ -237,6 +280,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   return (
     <div className="flex flex-col h-full bg-gray-100 dark:bg-gray-800">
       <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        {/* Toolbar for Zoom and Navigation */}
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
@@ -271,6 +315,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         </div>
       </div>
 
+      {/* Document Viewer */}
       <div ref={containerRef} className="flex-1 overflow-auto p-4">
         {documentInfo.pages.map((page: any, pageIndex: number) => {
           // const pageNumber = pageIndex + 1;
@@ -299,6 +344,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 alt={`Page ${pageIndex + 1}`}
                 className="absolute top-0 left-0 w-full h-full object-contain"
               />
+
+              {/*Since rectangle position in bboxes doesnot match height of document so commented */}
+
               {/* 
               {pageBBoxes?.map(
                 (
@@ -360,6 +408,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           );
         })}
 
+        {/* Floating zoom and fullscreen controls */}
         <div className="absolute  bottom-4 flex flex-col bg-gray-900 rounded-lg shadow-lg">
           <button
             className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-t-lg"

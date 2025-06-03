@@ -1,5 +1,6 @@
 import type { Field } from "../types";
 
+//Initials letters extraction of fields
 export const getFieldInitials = (label: string): string => {
   return label
     .split(" ")
@@ -8,6 +9,7 @@ export const getFieldInitials = (label: string): string => {
     .slice(0, 2);
 };
 
+//random colors for initial letters
 export const getRandomBadgeColor = (id: number): string => {
   const colors = [
     "bg-red-700",
@@ -39,6 +41,7 @@ interface LineItem {
   type: "line_item";
 }
 
+//sections fields conevrted in regualr and columns fileds ,regularfield with page 1 and position ,columns are children inside fields
 export const getAllFields = (
   sections: Section[]
 ): {

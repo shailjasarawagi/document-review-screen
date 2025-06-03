@@ -1,3 +1,9 @@
+/**
+ * FieldsSidebar component for displaying and managing fields in a sidebar
+ * Supports tabbed navigation between regular and column fields, with virtualized list rendering
+ * @param {FieldsSidebarProps} props - Component props
+ * @returns {JSX.Element} Sidebar UI with field list and controls
+ */
 import React, {
   useCallback,
   useEffect,
@@ -45,6 +51,10 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
   const [fieldToRemove, setFieldToRemove] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"regular" | "column">("regular");
 
+  /**
+   * Closes dropdown when clicking outside
+   * Ignores clicks on the "More options" button
+   */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -63,6 +73,10 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  /**
+   * Calculates the height for the virtualized list
+   * Adjusts based on container, header, and footer heights
+   */
   useEffect(() => {
     const calculateHeight = () => {
       if (containerRef.current && headerRef?.current && footerRef?.current) {
@@ -80,6 +94,11 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
     return () => window.removeEventListener("resize", calculateHeight);
   }, []);
 
+  /**
+   * Toggles dropdown visibility for a specific field
+   * @param {number} fieldId - ID of the field
+   * @param {React.MouseEvent} event - Mouse event
+   */
   const handleDropdownToggle = useCallback(
     (fieldId: number, event: React.MouseEvent) => {
       event.stopPropagation();
@@ -87,6 +106,9 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
     },
     []
   );
+  /**
+   * Confirms field removal and triggers callback
+   */
 
   const handleRemoveFieldRequest = useCallback(
     (fieldId: number, event: React.MouseEvent) => {
@@ -110,6 +132,11 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
     setShowRemoveConfirmModal(false);
     setFieldToRemove(null);
   }, []);
+
+  /**
+   * Memoized list of fields based on active tab
+   * @returns {Field[]} Array of fields (regular or column)
+   */
   const currentFields = useMemo(
     () => (activeTab === "regular" ? regularFields : columnFields),
     [activeTab, regularFields, columnFields]
@@ -153,6 +180,7 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
         </div>
       </div>
 
+      {/* Virtualized list of fields */}
       <div className="flex-1  px-4 py-2">
         {currentFields.length > 0 ? (
           <List
@@ -184,6 +212,7 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
           </div>
         )}
       </div>
+      {/* Footer with select all and confirm buttons */}
       <div
         className=" flex flex-row gap-2 p-4 border-t border-gray-200 dark:border-gray-700 "
         ref={footerRef}
@@ -207,6 +236,7 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
         </button>
       </div>
 
+      {/* Confirmation modal for field removal */}
       {showRemoveConfirmModal && (
         <ConfirmationModal
           isOpen={showRemoveConfirmModal}

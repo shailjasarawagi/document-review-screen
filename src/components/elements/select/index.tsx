@@ -1,4 +1,11 @@
-/* Select Component used in zoom level changes */
+/* Select Component
+ * A customizable dropdown component for selecting options.
+ * Features:
+ * - Displays a dropdown list of options.
+ * - Supports keyboard and mouse interactions.
+ * - Closes when clicking outside or selecting an option.
+ * - Fully customizable styles.
+ */
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
@@ -23,6 +30,7 @@ export function Select({
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
 
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -56,8 +64,8 @@ export function Select({
               type="button"
               className="w-full px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 first:rounded-t-md last:rounded-b-md"
               onClick={() => {
-                onValueChange(option);
-                setIsOpen(false);
+                onValueChange(option); // Update the selected value
+                setIsOpen(false); // close the dropdown
               }}
             >
               {option.label}

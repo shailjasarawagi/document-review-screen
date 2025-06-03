@@ -1,3 +1,9 @@
+/**
+ * ReviewScreen component for displaying a document review interface
+ * Integrates document viewer, fields sidebar, and navigation for field selection and confirmation
+ * @returns {JSX.Element} Review screen UI with header, navigation, document viewer, and sidebar
+ */
+
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { DocumentViewer } from "../../modules/document-viewer";
 import { FieldsSidebar } from "../../modules/fields-sidebar";
@@ -19,7 +25,9 @@ function ReviewScreen() {
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [regularFields, setRegularFields] = useState<any[]>([]);
   const [columnFields, setColumnFields] = useState<any[]>([]);
-
+  /**
+   * Updates regular and column fields when sections change
+   */
   useEffect(() => {
     if (sections.length > 0) {
       const { regularFields, columnFields } = getAllFields(sections);
@@ -28,6 +36,10 @@ function ReviewScreen() {
     }
   }, [sections]);
 
+  /**
+   * Memoized total number of pages
+   * @returns {number} Number of pages in the document
+   */
   const totalPages = useMemo(
     () => documentInfo?.pages.length || 0,
     [documentInfo]
@@ -41,11 +53,21 @@ function ReviewScreen() {
     [regularFields, columnFields, currentPage]
   );
 
+  /**
+   * Memoized regular fields filtered by current page
+   * @returns {any[]} Regular fields for the current page
+   */
   const availableRegularFields = useMemo(
     () =>
       [...regularFields].filter((field) => field.content.page === currentPage),
     [regularFields, currentPage]
   );
+
+  /**
+   * Debounced handler for setting hovered field to reduce frequent updates
+   * Uses requestAnimationFrame for smooth performance
+   * @returns {(fieldId: number | null) => void} Debounced hover handler
+   */
 
   const debouncedSetHoveredField = useCallback(
     (() => {
@@ -65,6 +87,9 @@ function ReviewScreen() {
     []
   );
 
+  /**
+   * Scrolls to the current page when it changes
+   */
   useEffect(() => {
     const targetPage = pageRefs.current[currentPage - 1];
     if (targetPage) {
@@ -72,6 +97,9 @@ function ReviewScreen() {
     }
   }, [currentPage]);
 
+  /**
+   * Handles keyboard navigation and actions for fields and confirmation
+   */
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey) {
@@ -118,6 +146,10 @@ function ReviewScreen() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedFields, hoveredField, availableFields]);
 
+  /**
+   * Memoized field counts per page
+   * @returns {Record<number, number>} Object mapping page numbers to field counts
+   */
   const fieldsPerPage = useMemo(
     () =>
       [...regularFields, ...columnFields].reduce((counts, field) => {
@@ -128,6 +160,10 @@ function ReviewScreen() {
     [regularFields, columnFields]
   );
 
+  /**
+   * Handles page changes with loading state and hover reset
+   * @param {number} page - Target page number
+   */
   const handlePageChange = useCallback(
     (page: number) => {
       if (isPageLoading) return;
@@ -146,7 +182,10 @@ function ReviewScreen() {
     },
     [isPageLoading]
   );
-
+  /**
+   * Toggles field selection
+   * @param {number} fieldId - ID of the field to select/deselect
+   */
   const handleFieldSelect = useCallback((fieldId: number) => {
     setSelectedFields((prev) => {
       const newSelected = new Set(prev);
@@ -159,6 +198,10 @@ function ReviewScreen() {
     });
   }, []);
 
+  /**
+   * Removes a field from both regular and column fields
+   * @param {number} fieldId - ID of the field to remove
+   */
   const handleFieldRemove = useCallback((fieldId: number) => {
     setRegularFields((prev) => prev.filter((field) => field.id !== fieldId));
     setColumnFields((prev) => prev.filter((field) => field.id !== fieldId));
@@ -169,6 +212,9 @@ function ReviewScreen() {
     });
   }, []);
 
+  /**
+   * Selects or deselects all fields on the current page
+   */
   const handleSelectAll = useCallback(() => {
     const pageFieldIds = availableFields.map((field) => field.id);
     setSelectedFields((prev) => {
@@ -188,6 +234,9 @@ function ReviewScreen() {
     }
   }, [selectedFields]);
 
+  /**
+   * Opens confirmation modal if multiple fields are selected
+   */
   const handleConfirmModalConfirm = useCallback(() => {
     setShowConfirmModal(false);
     setShowSuccessModal(true);
@@ -219,7 +268,7 @@ function ReviewScreen() {
         fieldsPerPage={fieldsPerPage}
         isLoading={isPageLoading}
       />
-
+      {/* Main content area with document viewer and sidebar */}
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 overflow-hidden">
           <DocumentViewer
@@ -248,7 +297,7 @@ function ReviewScreen() {
           onConfirm={handleConfirm}
         />
       </div>
-
+      {/* Confirmation modal for field selection */}
       {showConfirmModal && (
         <ConfirmationModal
           isOpen={showConfirmModal}
@@ -257,6 +306,7 @@ function ReviewScreen() {
           selectedCount={selectedFields.size}
         />
       )}
+      {/* Success modal after confirmation */}
       {showSuccessModal && (
         <SuccessModal
           isOpen={showSuccessModal}

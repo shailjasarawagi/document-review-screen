@@ -1,14 +1,22 @@
+/* ConfirmationModal Component
+ * A modal component that prompts the user for confirmation.
+ * Features:
+ * - Supports light and dark themes.
+ * - Displays a warning icon and customizable message.
+ * - Handles `Confirm` and `Cancel` actions.
+ */
+
 import type React from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { Modal } from "../../elements/modal";
 import { Button } from "../../elements/button";
 
 interface ConfirmationModalProps {
-  isOpen: boolean;
+  isOpen: boolean; //visibility control
   onClose: () => void;
   onConfirm: () => void;
   selectedCount: number;
-  message?: string;
+  message?: string; // Optional custom message for the modal
 }
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -23,10 +31,11 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   return (
     <Modal open={isOpen} onClose={onClose}>
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+        {/* Header  */}
         <div className="w-full flex items-center justify-between mb-4">
           <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Confirm Selection
+            {message ? "Remove Fields" : "Confirm Selection"}
           </h3>
           <Button onClick={onClose} variant="ghost">
             <X className="w-5 h-5" />
@@ -42,6 +51,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </p>
         )}
 
+        {/* Action buttons */}
         <div className="w-full flex flex-row gap-2">
           <Button
             onClick={onClose}

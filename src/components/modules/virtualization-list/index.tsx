@@ -1,4 +1,10 @@
 /* Virtualization list component */
+/**
+ * Row component for rendering a single field in a virtualized list
+ * Displays field details with selection, hover, and dropdown interactions
+ * @param {RowProps} props - Component props
+ * @returns {JSX.Element} Row UI with field information and controls
+ */
 import React from "react";
 import { MoreVertical, Trash2 } from "lucide-react";
 import type { Field } from "../../../types";
@@ -57,6 +63,7 @@ const Row: React.FC<RowProps> = React.memo(
           }
         }}
       >
+        {/* Field details and controls */}
         <div
           className={`w-8 h-8 rounded-md flex items-center justify-center text-white text-xs font-medium ${getRandomBadgeColor(
             field.id
@@ -64,7 +71,7 @@ const Row: React.FC<RowProps> = React.memo(
         >
           {getFieldInitials(field.label)}
         </div>
-
+        {/* Field details and controls */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -80,6 +87,7 @@ const Row: React.FC<RowProps> = React.memo(
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 onClick={(e) => e.stopPropagation()}
               />
+              {/* Dropdown toggle and menu */}
               <div className="relative">
                 <button
                   onClick={(e) => onDropdownToggle(field.id, e)}

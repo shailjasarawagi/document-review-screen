@@ -1,4 +1,8 @@
-/* Header Compoent */
+/**
+ * Header component for the review screen
+ * Displays the title and provides theme toggle, notifications, help, and user profile controls
+ * @returns {JSX.Element} Header UI with title and action buttons
+ */
 import { Bell, HelpCircle, MoreVertical } from "lucide-react";
 import { useTheme } from "../../../hooks/use-theme";
 import { ThemeToggle } from "../../elements/theme-toggle";
@@ -8,6 +12,7 @@ export function Header() {
 
   return (
     <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      {/* Main header container */}
       <div className="flex h-14 items-center justify-between px-6">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
           Review Screen

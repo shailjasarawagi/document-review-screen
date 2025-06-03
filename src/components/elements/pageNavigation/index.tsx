@@ -1,5 +1,12 @@
-/* Page Navigation Component */
-
+/* Page Navigation Component
+ * A reusable pagination component for navigating between pages in a dataset.
+ * Features:
+ * - Displays page numbers with ellipsis for large datasets.
+ * - Supports "Go to previous/next page" buttons.
+ * - Allows direct page input for quick navigation.
+ * - Shows the number of fields on the current page.
+ * - Accessibility: Includes `aria-label` and `aria-current` for better screen reader support.
+ */
 import React, { memo, useMemo } from "react";
 import {
   ChevronLeft,
@@ -24,11 +31,13 @@ export const PageNavigation = memo<PageNavigationProps>(
     fieldsPerPage,
     isLoading = false,
   }) => {
+    // Calculate the range of visible pages including ellipses for large datasets
     const visiblePages = useMemo(() => {
       const delta = 2;
       const range = [];
       const rangeWithDots = [];
 
+      // Add pages around the current page within the delta range
       for (
         let i = Math.max(2, currentPage - delta);
         i <= Math.min(totalPages - 1, currentPage + delta);
@@ -36,7 +45,7 @@ export const PageNavigation = memo<PageNavigationProps>(
       ) {
         range.push(i);
       }
-
+      // Add leading ellipsis if needed
       if (currentPage - delta > 2) {
         rangeWithDots.push(1, "...");
       } else {
@@ -45,6 +54,7 @@ export const PageNavigation = memo<PageNavigationProps>(
 
       rangeWithDots.push(...range);
 
+      // Add trailing ellipsis if needed
       if (currentPage + delta < totalPages - 1) {
         rangeWithDots.push("...", totalPages);
       } else if (totalPages > 1) {
@@ -57,6 +67,7 @@ export const PageNavigation = memo<PageNavigationProps>(
     return (
       <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-4">
+          {/* Navigation Controls */}
           <div className="flex items-center space-x-2">
             <button
               onClick={() => onPageChange(currentPage - 1)}
@@ -67,6 +78,7 @@ export const PageNavigation = memo<PageNavigationProps>(
               <ChevronLeft className="w-4 h-4 text-gray-900 dark:text-gray-100" />
             </button>
 
+            {/* Page Numbers */}
             <div className="flex items-center space-x-1">
               {visiblePages.map((page, index) => (
                 <React.Fragment key={index}>
@@ -106,6 +118,7 @@ export const PageNavigation = memo<PageNavigationProps>(
             </button>
           </div>
 
+          {/* Direct Page Jump */}
           <div className="flex items-center space-x-2">
             <label
               htmlFor="page-jump"
@@ -130,6 +143,7 @@ export const PageNavigation = memo<PageNavigationProps>(
           </div>
         </div>
 
+        {/* Status Summary */}
         <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center space-x-2">
             <FileText className="w-4 h-4" />
@@ -147,5 +161,3 @@ export const PageNavigation = memo<PageNavigationProps>(
     );
   }
 );
-
-PageNavigation.displayName = "PageNavigation";

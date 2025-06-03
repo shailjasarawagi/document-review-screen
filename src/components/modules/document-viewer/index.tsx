@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Maximize2, Minus, Plus, ZoomIn, ZoomOut } from "lucide-react";
 import type { Field, BoundingBox, ZoomLevel } from "../../../types";
 import { Button } from "../../elements/button";
@@ -32,14 +32,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   hoveredField,
   onFieldHover,
   fields,
-  bboxes,
+  // bboxes,
   documentInfo,
   currentPage,
   onPageChange,
   pageRefs,
 }) => {
   const [currentZoom, setCurrentZoom] = useState<ZoomLevel>(zoomLevels[0]);
-
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -151,74 +150,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     },
     [currentZoom, pageRefs?.current]
   );
-  // const adjustZoom = useCallback(
-  //   (direction: "in" | "out") => {
-  //     if (!containerRef.current) return;
-
-  //     // Step 1: Store the current scroll position and viewport center
-  //     const container = containerRef.current;
-  //     const oldScrollTop = container.scrollTop;
-  //     const oldScrollLeft = container.scrollLeft;
-  //     const containerRect = container.getBoundingClientRect();
-  //     const viewportCenterX = containerRect.width / 2;
-  //     const viewportCenterY = containerRect.height / 2;
-
-  //     // Get the current page element (based on currentPage)
-  //     const currentPageEl = pageRefs.current[currentPage - 1];
-  //     if (!currentPageEl) return;
-
-  //     const pageRect = currentPageEl.getBoundingClientRect();
-  //     const pageOffsetTop = pageRect.top - containerRect.top + oldScrollTop;
-  //     const pageOffsetLeft = pageRect.left - containerRect.left + oldScrollLeft;
-
-  //     // Calculate the relative position of the viewport center on the page
-  //     const oldZoom =
-  //       currentZoom.value === 0
-  //         ? getActualZoom(pageRect.width, pageRect.height)
-  //         : currentZoom.value;
-  //     const relativeCenterX =
-  //       (viewportCenterX + oldScrollLeft - pageOffsetLeft) / oldZoom;
-  //     const relativeCenterY =
-  //       (viewportCenterY + oldScrollTop - pageOffsetTop) / oldZoom;
-
-  //     // Step 2: Update zoom level
-  //     const currentIndex = zoomLevels.findIndex(
-  //       (z) => z.value === currentZoom.value
-  //     );
-  //     const newIndex =
-  //       direction === "in"
-  //         ? Math.min(currentIndex + 1, zoomLevels.length - 1)
-  //         : Math.max(currentIndex - 1, 0);
-  //     const newZoomLevel = zoomLevels[newIndex];
-  //     setCurrentZoom(newZoomLevel);
-
-  //     // Step 3: Calculate new scroll position to maintain the same content in view
-  //     setTimeout(() => {
-  //       if (!containerRef.current || !pageRefs.current[currentPage - 1]) return;
-
-  //       const newPageRect =
-  //         pageRefs.current[currentPage - 1]!.getBoundingClientRect();
-  //       const newActualZoom =
-  //         newZoomLevel.value === 0
-  //           ? getActualZoom(newPageRect.width, newPageRect.height)
-  //           : newZoomLevel.value;
-
-  //       // Calculate new scroll positions
-  //       const newScrollLeft =
-  //         relativeCenterX * newActualZoom - viewportCenterX + pageOffsetLeft;
-  //       const newScrollTop =
-  //         relativeCenterY * newActualZoom - viewportCenterY + pageOffsetTop;
-
-  //       // Apply the new scroll positions
-  //       containerRef.current!.scrollTo({
-  //         top: newScrollTop,
-  //         left: newScrollLeft,
-  //         behavior: "auto",
-  //       });
-  //     }, 0); // Use setTimeout to ensure DOM updates are applied
-  //   },
-  //   [currentZoom, pageRefs, currentPage, containerSize, getActualZoom]
-  // );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -284,39 +215,20 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     [selectedFields, hoveredField]
   );
 
-  // Bounding box position
-  const getFieldPositions = useCallback(
-    (
-      field: [number, number, number, number],
-
-      actualZoom: number
-    ) => {
-      if (!field || field.length !== 4) return null;
-      const [x1, y1, x2, y2] = field;
-      return {
-        left: x1 * actualZoom,
-        top: y1 * actualZoom,
-        width: (x2 - x1) * actualZoom,
-        height: (y2 - y1) * actualZoom,
-      };
-    },
-    [currentPage]
-  );
-
   //filter boxpages according to page number
-  const boxesByPage = useMemo(() => {
-    if (!bboxes || bboxes.length === 0) {
-      return {};
-    }
+  // const boxesByPage = useMemo(() => {
+  //   if (!bboxes || bboxes.length === 0) {
+  //     return {};
+  //   }
 
-    const map = {} as Record<number, [number, number, number, number][]>;
-    bboxes.forEach(({ page, rectangle }: BoundingBox) => {
-      if (!map[page]) map[page] = [];
-      map[page].push(rectangle);
-    });
+  //   const map = {} as Record<number, [number, number, number, number][]>;
+  //   bboxes.forEach(({ page, rectangle }: BoundingBox) => {
+  //     if (!map[page]) map[page] = [];
+  //     map[page].push(rectangle);
+  //   });
 
-    return map;
-  }, [bboxes]);
+  //   return map;
+  // }, [bboxes]);
 
   useEffect(() => {
     debouncedDetectVisiblePage();
@@ -361,11 +273,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
       <div ref={containerRef} className="flex-1 overflow-auto p-4">
         {documentInfo.pages.map((page: any, pageIndex: number) => {
-          const pageNumber = pageIndex + 1;
+          // const pageNumber = pageIndex + 1;
           const pageWidth = page.image.width;
           const pageHeight = page.image.height;
           const actualZoom = getActualZoom(pageWidth, pageHeight);
-          const pageBBoxes = boxesByPage[pageNumber] || [];
+          // const pageBBoxes = boxesByPage[pageNumber] || [];
 
           return (
             <div
@@ -387,7 +299,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 alt={`Page ${pageIndex + 1}`}
                 className="absolute top-0 left-0 w-full h-full object-contain"
               />
-
+              {/* 
               {pageBBoxes?.map(
                 (
                   [x0, y0, x2, y2]: [number, number, number, number],
@@ -417,7 +329,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     />
                   );
                 }
-              )}
+              )} */}
 
               {fields.map((field) => {
                 const position = getFieldPosition(field, actualZoom);

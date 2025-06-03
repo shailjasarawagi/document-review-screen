@@ -139,7 +139,7 @@ export const PageNavigation = memo<PageNavigationProps>(
           </div>
           <div className="flex items-center space-x-4">
             <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md">
-              {fieldsPerPage[currentPage] || 0} fields on page
+              {fieldsPerPage[currentPage] || 0} Regular fields on page
             </span>
           </div>
         </div>

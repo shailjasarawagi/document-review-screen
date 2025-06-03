@@ -310,8 +310,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         </div>
 
         <div className="text-xs text-gray-500 dark:text-gray-400">
-          Use Ctrl+A to select all • ↑↓ to navigate fields • PageUp/PageDown for
-          pages • +- to Zoomin/Zoomout
+          Use Ctrl+A to select all • ↑↓ to navigate fields • +- to
+          Zoomin/Zoomout • f for full screen
         </div>
       </div>
 

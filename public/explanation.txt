@@ -1,0 +1,83 @@
+Document Review Application - Component and Hook Explanations
+
+1. Home Component
+   Purpose: Serves as the main entry point for the application, wrapping the ReviewScreen component in a ThemeProvider to enable theme management.
+   Functionality: Renders the ReviewScreen within a theme context, ensuring all child components can access theme state and toggle functionality.
+   Key Features: Minimal component that sets up the application structure.
+
+2. ReviewScreen Component
+   Purpose: Core component that integrates the document viewer, fields sidebar, header, page navigation, and modals for a complete review interface.
+   Functionality: Manages state for selected fields, hovered fields, current page, and modal visibility. Uses useDocumentData to fetch document data and coordinates interactions between child components.
+   Key Features:
+     - Handles keyboard navigation (Ctrl+A, ArrowUp/Down,) for accessibility.
+     - Filters fields by page for display in the viewer and sidebar.
+     - Manages page changes with smooth scrolling and loading states.
+     - Shows confirmation and success modals for field actions.
+
+3. DocumentViewer Component
+   Purpose: Displays document pages with zoom, fullscreen, and field highlighting capabilities.
+   Functionality: Renders pages with images and overlays for fields, supports zooming via buttons or keyboard (+/-), and toggles fullscreen mode (F key). Uses IntersectionObserver to detect visible pages and update the current page state.
+   Key Features:
+     - Zoom levels (Fit, 75%, 100%, 125%, 150%, 200%) with dynamic scaling.
+     - Field overlays with hover and selection highlighting.
+     - Smooth page navigation with ref-based scrolling.
+
+4. FieldsSidebar Component
+   Purpose: Displays a virtualized list of fields (regular or column) with tabs, selection, and removal options.
+   Functionality: Uses react-window for efficient rendering of large field lists. Supports tab switching, field selection, hover effects, and removal with a confirmation modal.
+   Key Features:
+     - Tabs for regular and column fields.
+     - Virtualized list for performance with large datasets.
+     - Dropdown menus for field removal.
+     - Select All and Confirm buttons for bulk actions.
+
+5. Header Component
+   Purpose: Provides a header with the app title and action buttons for theme toggling, notifications, help, and user profile.
+   Functionality: Integrates with useTheme hook to toggle between light and dark modes. Includes icon buttons for additional functionality (currently placeholders).
+   Key Features:
+     - Theme toggle button.
+     - Placeholder buttons for more options, help, and notifications.
+     - Gradient avatar for user profile.
+
+6. Row Component
+   Purpose: Renders individual field items in the FieldsSidebar's virtualized list.
+   Functionality: Displays field label, value, and initials badge with random color. Supports selection via checkbox, hover effects, and a dropdown for removal.
+   Key Features:
+     - Optimized with React.memo to prevent unnecessary re-renders.
+     - Accessibility support with keyboard selection (Enter/Space).
+     - Dropdown menu for field removal with confirmation.
+
+7. useTheme Hook
+   Purpose: Manages light/dark theme state and toggling.
+   Functionality: Initializes theme based on localStorage or system preference (prefers-color-scheme). Updates document class for dark mode styling and persists theme in localStorage.
+   Key Features:
+     - Respects system color scheme for initial theme.
+     - Persists theme preference across sessions.
+     - Provides toggleTheme function for switching themes.
+
+8. useDocumentData Hook
+   Purpose: Loads mock document data (bounding boxes, sections, document info) from static JSON files.
+   Functionality: Fetches data asynchronously, sets state for bounding boxes, sections, and document info, and manages loading state.
+   Key Features:
+     - Handles mock data from JSON files (sections.json, pages.json, bboxes_*.json).
+     - Error handling for data loading.
+     - Returns data and loading state for use in ReviewScreen.
+
+Interactions and Data Flow
+- The Home component sets up the ThemeProvider, which provides theme context to all components.
+- ReviewScreen fetches data via useDocumentData and passes it to DocumentViewer and FieldsSidebar.
+- DocumentViewer uses pageRefs and IntersectionObserver to track the current page, syncing with ReviewScreen's currentPage state.
+- FieldsSidebar uses availableFields and availableRegularFields from ReviewScreen to filter fields by page.
+- Row components in FieldsSidebar handle individual field interactions, updating selectedFields and hoveredField states in ReviewScreen.
+- Header uses useTheme to toggle themes, affecting all components via Tailwind's dark mode classes.
+- Confirmation and success modals are triggered by ReviewScreen for field actions, coordinating with FieldsSidebar and Row.
+
+Notes
+- Multi-page support includes page 2 for scrolling demonstration.
+- Bounding boxes in bboxes.json for page 1 have position values exceeding page height, causing rendering issues.
+- Column fields are rendered from children in sections.json.
+- State management uses React state; a global store (e.g., Redux, Zustand) could improve scalability and reduce prop drilling.
+- The application uses mock data, which should be replaced with API calls for production.
+- Type safety could be improved by defining stricter types for JSON data and fields (currently using any in some cases).
+- Accessibility features are implemented but may require further testing for full compliance.
+-

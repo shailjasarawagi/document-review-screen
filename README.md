@@ -1,6 +1,8 @@
-# Document Review Interface
+# Document Review Application
 
-A comprehensive React-based document review interface for extracting and confirming data from documents with interactive field highlighting and validation.
+## Overview
+
+This is a React-based web application for reviewing documents with interactive field selection, zoomable document viewing, and theme switching capabilities. The application allows users to navigate multi-page documents, select and highlight fields, and manage them via a sidebar interface with virtualized list rendering for performance.
 
 ## Features
 
@@ -28,6 +30,22 @@ A comprehensive React-based document review interface for extracting and confirm
 - **Dynamic Field Badges**: Color-coded badges with field initials
 - **Performance Optimizations**: Virtualized lists, memoization, and efficient rendering
 
+## Project Structure
+
+- **Components**:
+  - `Home`: Main entry point, wrapping the application in a `ThemeProvider`.
+  - `ReviewScreen`: Core component integrating document viewer, sidebar, header, and modals.
+  - `DocumentViewer`: Renders document pages with zoom, fullscreen, and field highlighting.
+  - `FieldsSidebar`: Displays a virtualized list of fields, with tabs for regular and column fields.
+  - `Header`: Displays the app title and action buttons (theme toggle, notifications, etc.).
+  - `Row`: Renders individual field rows in the sidebar's virtualized list.
+- **Hooks**:
+  - `useTheme`: Manages light/dark theme state and toggling.
+  - `useDocumentData`: Loads mock document data from JSON files.
+- **Dependencies**:
+  - React, React Window (for virtualization), Lucide React (for icons).
+  - Tailwind CSS for styling (assumed based on class names).
+
 ## Technology Stack
 
 - **Frontend**: React 19 with TypeScript
@@ -49,25 +67,28 @@ The application works with three main data sources:
 ## Installation & Setup
 
 1. **Clone the repository**
-   \`\`\`bash
+
+   ```bash
    git clone <repository-url>
    cd document-review-screen
-   \`\`\`
+   ```
 
 2. **Install dependencies**
-   \`\`\`bash
+
+   ```bash
    npm install
-   \`\`\`
+   ```
 
 3. **Start development server**
-   \`\`\`bash
+
+   ```bash
    npm run dev
-   \`\`\`
+   ```
 
 4. **Build for production**
-   \`\`\`bash
+   ```bash
    npm run build
-   \`\`\`
+   ```
 
 ## Usage
 
@@ -104,14 +125,20 @@ To run Google Lighthouse and generate performance insights:
 
 1. **Local Development**:
 
-   - Open Chrome DevTools (F12 or Right-click > Inspect)
-   - Go to the "Lighthouse" tab
-   - Select categories to audit (Performance, Accessibility, Best Practices, SEO)
-   - Click "Generate report"
+- Open Chrome DevTools (F12 or Right-click > Inspect)
+- Go to the "Lighthouse" tab
+- Select categories to audit (Performance, Accessibility, Best Practices, SEO)
+- Click "Generate report"
 
 ### Lighthouse Results Screenshot
 
-![Lighthouse Performance Results](./public/assets/lighthouse.jpg)
+![Lighthouse Performance Results](./public/lighthouse.png)
+
+- [Detailed Lighthouse Results](./public/lighthouse..pdf)
+
+### Documentation
+
+- [Documentation PDF](./public/explanation.txt): Detailed project documentation.
 
 ### Key Performance Metrics
 
@@ -133,13 +160,6 @@ The application includes several performance optimizations:
 6. **RequestAnimationFrame**: Used for smooth animations and interactions
 7. **Optimized Field Positioning**: Percentage-based positioning for perfect alignment during rotation
 
-## Browser Compatibility
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-
 ## Accessibility Features
 
 - Keyboard navigation support
@@ -154,17 +174,11 @@ The application includes several performance optimizations:
 - Batch processing capabilities
 - Real-time collaboration
 - Advanced search and filtering
-- OCR confidence heatmap
-- Annotation tools
+- Fix bounding box rendering issues by validating position values against page dimensions.
 
-## Contributing
+## Notes
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
+1. **Multi-Page Support**: Page 2 has been added to demonstrate multi-page scrolling functionality.
+2. **Bounding Boxes Issue**: The bboxes.json file contains rectangles for page 1 with position values exceeding page height, preventing rendering of boxes..
+3. **Column Fields**: Children inside sections.json are rendered as column fields in the sidebar.
+4. **State Management**: The application uses React state for data flow. A global store (e.g., Redux or Zustand) could be implemented to reduce prop drilling and support advanced document review features.

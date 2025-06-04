@@ -106,13 +106,13 @@ The application works with three main data sources:
 
 ### Lighthouse Results Screenshot
 
-![Lighthouse Performance Results](./public/lighthouse.png)
+![Lighthouse Performance Results](./doc/lighthouse.png)
 
-- [Detailed Lighthouse Results](./public/lighthouse.pdf)
+- [Detailed Lighthouse Results](./doc/lighthouse.pdf)
 
 ### Documentation
 
-- [Documentation PDF](./public/explanation.txt): Detailed project documentation.
+- [Documentation File](./doc/explanation.txt): Detailed project documentation.
 
 ## Performance Optimizations
 

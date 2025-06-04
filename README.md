@@ -102,33 +102,7 @@ The application works with three main data sources:
 6. **Confirmation**: Click "Confirm" to process selected fields
 7. **Success**: Receive confirmation of successful processing
 
-### Keyboard Navigation
-
-- Use arrow keys to navigate through fields
-- Press space to select/deselect the current field
-- Use Ctrl/Cmd + A to select all fields
-- Press Ctrl/Cmd + Enter to confirm selection
-- Use +/- keys to zoom in/out
-- Press F to toggle fullscreen mode
-
-### Field Management
-
-- Click the three-dot menu next to any field to access options
-- Remove unwanted fields using the "Remove" option
-- Fields are dynamically updated in both sidebar and document view
-
 ## Performance Insights
-
-### Google Lighthouse Results
-
-To run Google Lighthouse and generate performance insights:
-
-1. **Local Development**:
-
-- Open Chrome DevTools (F12 or Right-click > Inspect)
-- Go to the "Lighthouse" tab
-- Select categories to audit (Performance, Accessibility, Best Practices, SEO)
-- Click "Generate report"
 
 ### Lighthouse Results Screenshot
 
@@ -139,14 +113,6 @@ To run Google Lighthouse and generate performance insights:
 ### Documentation
 
 - [Documentation PDF](./public/explanation.txt): Detailed project documentation.
-
-### Key Performance Metrics
-
-- **First Contentful Paint (FCP)**: Time until the first content is rendered
-- **Largest Contentful Paint (LCP)**: Time until the largest content element is rendered
-- **Total Blocking Time (TBT)**: Sum of all time periods between FCP and Time to Interactive
-- **Cumulative Layout Shift (CLS)**: Measures visual stability
-- **Speed Index**: How quickly content is visually displayed during page load
 
 ## Performance Optimizations
 
@@ -160,18 +126,10 @@ The application includes several performance optimizations:
 6. **RequestAnimationFrame**: Used for smooth animations and interactions
 7. **Optimized Field Positioning**: Percentage-based positioning for perfect alignment during rotation
 
-## Accessibility Features
-
-- Keyboard navigation support
-- ARIA labels for screen readers
-- High contrast mode compatibility
-- Focus management for modals
-
 ## Future Enhancements
 
 - Advanced field validation
 - Export functionality
-- Batch processing capabilities
 - Real-time collaboration
 - Advanced search and filtering
 - Fix bounding box rendering issues by validating position values against page dimensions.
@@ -179,6 +137,7 @@ The application includes several performance optimizations:
 ## Notes
 
 1. **Multi-Page Support**: Page 2 has been added to demonstrate multi-page scrolling functionality.
-2. **Bounding Boxes Issue**: The bboxes.json file contains rectangles for page 1 with position values exceeding page height, preventing rendering of boxes..
-3. **Column Fields**: Children inside sections.json are rendered as column fields in the sidebar.
-4. **State Management**: The application uses React state for data flow. A global store (e.g., Redux or Zustand) could be implemented to reduce prop drilling and support advanced document review features.
+2. **Bounding Boxes Issue**: The bboxes.json file contains rectangles for page 1 with position values exceeding page height, preventing rendering of boxes.
+3. **Conditional Rendering of fields**: Render Fields according to page number.
+4. **Column Fields**: Children inside sections.json are rendered as column fields in the sidebar.
+5. **State Management**: The application uses React state for data flow. A global store (e.g., Redux or ContextAPI) could be implemented to reduce prop drilling and support advanced document review features.

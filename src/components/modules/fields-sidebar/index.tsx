@@ -5,6 +5,8 @@
  * @returns {JSX.Element} Sidebar UI with field list and controls
  */
 import React, {
+  Dispatch,
+  SetStateAction,
   useCallback,
   useEffect,
   useMemo,
@@ -27,6 +29,8 @@ interface FieldsSidebarProps {
   onConfirm: () => void;
   regularFields: Field[];
   columnFields: Field[];
+  activeTab: string;
+  setActiveTab: Dispatch<SetStateAction<"regular" | "column">>;
 }
 
 export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
@@ -40,6 +44,8 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
   onFieldRemove,
   onSelectAll,
   onConfirm,
+  activeTab,
+  setActiveTab,
 }) => {
   const [showDropdown, setShowDropdown] = useState<number | null>(null);
   const [listHeight, setListHeight] = useState(0);
@@ -49,7 +55,6 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showRemoveConfirmModal, setShowRemoveConfirmModal] = useState(false);
   const [fieldToRemove, setFieldToRemove] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"regular" | "column">("regular");
 
   /**
    * Closes dropdown when clicking outside
@@ -218,7 +223,7 @@ export const FieldsSidebar: React.FC<FieldsSidebarProps> = ({
         ref={footerRef}
       >
         <button
-          onClick={onSelectAll}
+          onClick={() => onSelectAll()}
           className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           Select All

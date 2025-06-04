@@ -25,6 +25,7 @@ function ReviewScreen() {
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [regularFields, setRegularFields] = useState<any[]>([]);
   const [columnFields, setColumnFields] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"regular" | "column">("regular");
   /**
    * Updates regular and column fields when sections change
    */
@@ -98,6 +99,15 @@ function ReviewScreen() {
   }, [currentPage]);
 
   /**
+   * Memoized list of fields based on active tab
+   * @returns {Field[]} Array of fields (regular or column)
+   */
+  const currentFields = useMemo(
+    () => (activeTab === "regular" ? regularFields : columnFields),
+    [activeTab, regularFields, columnFields]
+  );
+
+  /**
    * Handles keyboard navigation and actions for fields and confirmation
    */
   useEffect(() => {
@@ -114,20 +124,20 @@ function ReviewScreen() {
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
         event.preventDefault();
         const currentIndex = hoveredField
-          ? availableFields.findIndex((f) => f.id === hoveredField)
+          ? currentFields.findIndex((f) => f.id === hoveredField)
           : -1;
 
         let nextIndex;
         if (event.key === "ArrowUp") {
           nextIndex =
-            currentIndex > 0 ? currentIndex - 1 : availableFields.length - 1;
+            currentIndex > 0 ? currentIndex - 1 : currentFields.length - 1;
         } else {
           nextIndex =
-            currentIndex < availableFields.length - 1 ? currentIndex + 1 : 0;
+            currentIndex < currentFields.length - 1 ? currentIndex + 1 : 0;
         }
 
-        if (availableFields[nextIndex]) {
-          setHoveredField(availableFields[nextIndex].id);
+        if (currentFields[nextIndex]) {
+          setHoveredField(currentFields[nextIndex].id);
         }
       }
 
@@ -144,7 +154,7 @@ function ReviewScreen() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedFields, hoveredField, availableFields]);
+  }, [selectedFields, hoveredField, currentFields, activeTab]);
 
   /**
    * Memoized field counts per page
@@ -216,7 +226,7 @@ function ReviewScreen() {
    * Selects or deselects all fields on the current page
    */
   const handleSelectAll = useCallback(() => {
-    const pageFieldIds = availableFields.map((field) => field.id);
+    const pageFieldIds = currentFields.map((field) => field.id);
     setSelectedFields((prev) => {
       const newSelected = new Set(prev);
       if (pageFieldIds.every((id) => prev.has(id))) {
@@ -226,7 +236,7 @@ function ReviewScreen() {
       }
       return newSelected;
     });
-  }, [availableFields]);
+  }, [activeTab, currentFields]);
 
   const handleConfirm = useCallback(() => {
     if (selectedFields.size > 1) {
@@ -295,6 +305,8 @@ function ReviewScreen() {
           onFieldRemove={handleFieldRemove}
           onSelectAll={handleSelectAll}
           onConfirm={handleConfirm}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
         />
       </div>
       {/* Confirmation modal for field selection */}

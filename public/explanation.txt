@@ -80,4 +80,3 @@ Notes
 - The application uses mock data, which should be replaced with API calls for production.
 - Type safety could be improved by defining stricter types for JSON data and fields (currently using any in some cases).
 - Accessibility features are implemented but may require further testing for full compliance.
--
